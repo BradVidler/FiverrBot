@@ -84,8 +84,8 @@
             this.lblAccountsCreated = new System.Windows.Forms.Label();
             this.label17 = new System.Windows.Forms.Label();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
-            this.button3 = new System.Windows.Forms.Button();
-            this.button4 = new System.Windows.Forms.Button();
+            this.btnStopCreating = new System.Windows.Forms.Button();
+            this.btnCreateAccounts = new System.Windows.Forms.Button();
             this.comboBox2 = new System.Windows.Forms.ComboBox();
             this.textBox2 = new System.Windows.Forms.TextBox();
             this.label16 = new System.Windows.Forms.Label();
@@ -737,8 +737,8 @@
             // 
             // groupBox2
             // 
-            this.groupBox2.Controls.Add(this.button3);
-            this.groupBox2.Controls.Add(this.button4);
+            this.groupBox2.Controls.Add(this.btnStopCreating);
+            this.groupBox2.Controls.Add(this.btnCreateAccounts);
             this.groupBox2.Controls.Add(this.comboBox2);
             this.groupBox2.Controls.Add(this.textBox2);
             this.groupBox2.Controls.Add(this.label16);
@@ -760,28 +760,29 @@
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Account Settings";
             // 
-            // button3
+            // btnStopCreating
             // 
-            this.button3.BackColor = System.Drawing.SystemColors.ControlDarkDark;
-            this.button3.Enabled = false;
-            this.button3.ForeColor = System.Drawing.SystemColors.Control;
-            this.button3.Location = new System.Drawing.Point(376, 190);
-            this.button3.Name = "button3";
-            this.button3.Size = new System.Drawing.Size(115, 28);
-            this.button3.TabIndex = 26;
-            this.button3.Text = "Stop Creating";
-            this.button3.UseVisualStyleBackColor = false;
+            this.btnStopCreating.BackColor = System.Drawing.SystemColors.ControlDarkDark;
+            this.btnStopCreating.Enabled = false;
+            this.btnStopCreating.ForeColor = System.Drawing.SystemColors.Control;
+            this.btnStopCreating.Location = new System.Drawing.Point(376, 190);
+            this.btnStopCreating.Name = "btnStopCreating";
+            this.btnStopCreating.Size = new System.Drawing.Size(115, 28);
+            this.btnStopCreating.TabIndex = 26;
+            this.btnStopCreating.Text = "Stop Creating";
+            this.btnStopCreating.UseVisualStyleBackColor = false;
             // 
-            // button4
+            // btnCreateAccounts
             // 
-            this.button4.BackColor = System.Drawing.SystemColors.ControlDarkDark;
-            this.button4.ForeColor = System.Drawing.SystemColors.Control;
-            this.button4.Location = new System.Drawing.Point(255, 190);
-            this.button4.Name = "button4";
-            this.button4.Size = new System.Drawing.Size(115, 28);
-            this.button4.TabIndex = 25;
-            this.button4.Text = "Start Creating";
-            this.button4.UseVisualStyleBackColor = false;
+            this.btnCreateAccounts.BackColor = System.Drawing.SystemColors.ControlDarkDark;
+            this.btnCreateAccounts.ForeColor = System.Drawing.SystemColors.Control;
+            this.btnCreateAccounts.Location = new System.Drawing.Point(255, 190);
+            this.btnCreateAccounts.Name = "btnCreateAccounts";
+            this.btnCreateAccounts.Size = new System.Drawing.Size(115, 28);
+            this.btnCreateAccounts.TabIndex = 25;
+            this.btnCreateAccounts.Text = "Start Creating";
+            this.btnCreateAccounts.UseVisualStyleBackColor = false;
+            this.btnCreateAccounts.Click += new System.EventHandler(this.btnCreateAccounts_Click);
             // 
             // comboBox2
             // 
@@ -920,6 +921,7 @@
             this.txtLog.ReadOnly = true;
             this.txtLog.Size = new System.Drawing.Size(859, 118);
             this.txtLog.TabIndex = 0;
+            this.txtLog.WordWrap = false;
             // 
             // chkDisplayLogMessages
             // 
@@ -1077,8 +1079,8 @@
         private System.Windows.Forms.Label label19;
         private System.Windows.Forms.Label lblAccountsCreated;
         private System.Windows.Forms.Label label17;
-        private System.Windows.Forms.Button button3;
-        private System.Windows.Forms.Button button4;
+        private System.Windows.Forms.Button btnStopCreating;
+        private System.Windows.Forms.Button btnCreateAccounts;
         private System.Windows.Forms.ComboBox comboBox2;
         private System.Windows.Forms.Button btnExportToSystem;
         private System.Windows.Forms.Button btnExportUserPass;
