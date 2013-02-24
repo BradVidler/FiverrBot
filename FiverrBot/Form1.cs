@@ -22,11 +22,12 @@ namespace FiverrBot
     {
         private Random random = new Random();
 
-        private List<string> usernames, emails, proxies;
+        private List<string> usernames, emails, proxies, unusedemails;
         private List<Hashtable> accountsToCreate, systemAccounts;
+        private List<string> fnames, lnames, genusernames;
 
         int createdAccounts = 0;
-        int numThreads = 1;
+        int numThreads = 3;
         int threadsRunning = 0;
         int creatorThreadsRunning = 0;
 
@@ -39,6 +40,10 @@ namespace FiverrBot
         {
             InitializeComponent();
 
+            //load first names and last names into memory
+            fnames = parser("firstnames.txt");
+            lnames = parser("lastnames.txt");
+
             //Load system data and display it
             proxies = parser("systemproxies.txt");
             lblProxiesLoaded.Text = Convert.ToString(proxies.Count);
@@ -50,6 +55,8 @@ namespace FiverrBot
             TextBoxWatermarkExtensionMethod.SetWatermark(txtAddPort, "Port (Optional)");
             TextBoxWatermarkExtensionMethod.SetWatermark(txtAddProxyUsername, "Proxy Username (Optional)");
             TextBoxWatermarkExtensionMethod.SetWatermark(txtAddProxyPassword, "Proxy Password (Optional)");
+            TextBoxWatermarkExtensionMethod.SetWatermark(txtProxyReuses, "Proxy Reuses");
+            
         }
 
         //method used to convert files to lists
@@ -72,11 +79,11 @@ namespace FiverrBot
             }
             catch (FileNotFoundException filex)
             {
-                txtLog.AppendText("Could not find " + file + ". If this is a system file it will automatically be generated for you when you import the appropriate data.");
+                txtLog.AppendText("Could not find " + file + ". If this is a system file it will automatically be generated for you when you import the appropriate data." + System.Environment.NewLine + txtLog.Text);
             }
             catch (Exception ex)
             {
-                txtLog.AppendText("Error loading " + file + " - " + ex.Message);
+                txtLog.AppendText("Error loading " + file + " - " + ex.Message + System.Environment.NewLine + txtLog);
             }
             
             return parsedfile;
@@ -116,15 +123,29 @@ namespace FiverrBot
             {
                 string username = Convert.ToString(account["username"]);
                 string password = Convert.ToString(account["password"]);
-                string email = Convert.ToString(account["email"]);
+                string email = "";
                 string proxy = Convert.ToString(account["proxy"]);
 
-                //remove username, email and proxy from lists
-                usernames.Remove(username);
-                emails.Remove(email);
+                //lock email list and take the first one and remove it
+                lock (emails)
+                {
+                    if (emails.Count != 0)
+                    {
+                        email = emails.First();
+                        emails.Remove(email);
+                    }
+                    else
+                    {
+                        threadsRunning--;
+                        creatorThreadsRunning--;
+                        lblThreadsRunning.SetPropertyThreadSafe(() => lblThreadsRunning.Text, Convert.ToString(threadsRunning));
+                        lblCreatorThreadsRunning.SetPropertyThreadSafe(() => lblCreatorThreadsRunning.Text, Convert.ToString(creatorThreadsRunning));
+                        resetEvents[index].Set(); //signal the thread is done working
+                    }
+                }
 
-                if (proxy != "127.0.0.1:8080")
-                    proxies.Remove(proxy);
+                if (resetEvents[index].WaitOne(0))
+                    return;
 
                 //Convert proxy to a WebProxy
                 WebProxy proxyObject = new WebProxy(proxy);
@@ -166,14 +187,6 @@ namespace FiverrBot
 
                     /* STEP 1: Go to to join page */
 
-                    //GET http://fiverr.com/join HTTP/1.1
-                    //Host: fiverr.com
-                    //User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64; rv:19.0) Gecko/20100101 Firefox/19.0
-                    //Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
-                    //Accept-Language: en-US,en;q=0.5
-                    //Accept-Encoding: gzip, deflate
-                    //Connection: keep-alive
-
                     request = (HttpWebRequest)HttpWebRequest.Create("http://fiverr.com/join");
 
                     request.Method = "GET";
@@ -190,14 +203,8 @@ namespace FiverrBot
                     response = (HttpWebResponse)request.GetResponse();
                     tempCookies.Add(response.Cookies);
 
-                    //Load the page and grab the X-CSRF Token from this code:
-                    /*
-                        <meta content="authenticity_token" name="csrf-param" />
-                        <meta content="JbzGgE985PHMSpi5voFHqlV3PHAUzLzQNOqVJt3HhOQ=" name="csrf-token" />
-                    */
-
+                    //Load the page and grab the X-CSRF Token
                     responseReader = new StreamReader(response.GetResponseStream());
-                    //thePage = responseReader.ReadToEnd();
 
                     //Create html doc
                     agilityPage = new HtmlAgilityPack.HtmlDocument();
@@ -217,17 +224,6 @@ namespace FiverrBot
                     }
 
                     //extract captcha "secret" and break captcha from
-                    /*
-                    <div class="captcha">
-                        <label class="style1"></label><br/>
-                        <div class="captcha-area" style="display:block">
-                     * 
-                        <span>2 + 9 =</span> //This is the captcha we need to break. Yeah... It's pretty difficult...
-                     * 
-                        <input class="text style2" id="user_captcha_solution" name="user[captcha_solution]" size="30" type="text" />
-                        <input id="user_captcha_secret" name="user[captcha_secret]" type="hidden" value="zleiGnFdA7nsUDMeVaTDnNlzs2qwhJMK0k4mNfUwfFc=" />
-                    */
-
                     string captchaSecret = "";
                     foreach (HtmlNode node in agilityPage.DocumentNode.SelectNodes("//input"))
                     {
@@ -253,9 +249,6 @@ namespace FiverrBot
                     string captchaAnswer = (numOne + numTwo).ToString();
 
                     //Now all we need is the "User Spam Answers" data. This is probably an encoded version of the actual answer that Fiverr uses to verify our response.
-                    //<input id="user_spam_answers" name="user[spam_answers]" type="hidden" 
-                    //       value="$2a$10$aGPCeWmh2oibmUHWdb23YOU0JfrQil1X7c9LC8KE2c6X5IeC.4yKG-$2a$10$aGPCeWmh2oibmUHWdb23YOgVvL0cyjaWyo3OlQ9d2LIT4Yh/YSf.K" />
-
                     string userSpamAnswers = "";
                     foreach (HtmlNode node in agilityPage.DocumentNode.SelectNodes("//input"))
                     {
@@ -270,25 +263,6 @@ namespace FiverrBot
                     response.Close();
 
                     /* STEP 2: Check user */
-
-                    //POST http://fiverr.com/checkuser HTTP/1.1
-                    //Host: fiverr.com
-                    //User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64; rv:19.0) Gecko/20100101 Firefox/19.0
-                    //Accept: text/javascript
-                    //Accept-Language: en-US,en;q=0.5
-                    //Accept-Encoding: gzip, deflate
-                    //Content-Type: application/x-www-form-urlencoded; charset=UTF-8
-                    //X-Requested-With: XMLHttpRequest
-                    //X-CSRF-Token: JbzGgE985PHMSpi5voFHqlV3PHAUzLzQNOqVJt3HhOQ=
-                    //Referer: http://fiverr.com/join
-                    //Content-Length: 24
-                    //Cookie: _fiverr_session=BAh7ByIPc2Vzc2lvbl9pZEkiJWI1NDQyNmM0MzY4MjIyYzIwYTY4NmJlN2NlNzc5OWUxBjoGRVQiEF9jc3JmX3Rva2VuSSIxSmJ6R2dFOTg1UEhNU3BpNXZvRkhxbFYzUEhBVXpMelFOT3FWSnQzSGhPUT0GOwBG--68198f6975333b81cb957393176d0727cdadbded; __utma=156287140.1399514973.1361481945.1361481945.1361481945.1; __utmb=156287140.1.10.1361481945; __utmc=156287140; __utmz=156287140.1361481945.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none)
-                    //Connection: keep-alive
-                    //Pragma: no-cache
-                    //Cache-Control: no-cache
-
-                    //username=SuperSweetCandy
-
                     postData = "username=" + username; //change the username here to a variable
 
                     //Properly encode our data for the server
@@ -323,27 +297,6 @@ namespace FiverrBot
                     response.Close();
 
                     /* STEP 3: Check suspicious email */
-
-                    //POST http://fiverr.com/check_suspicious_email HTTP/1.1
-                    //Host: fiverr.com
-                    //User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64; rv:19.0) Gecko/20100101 Firefox/19.0
-                    //Accept: text/javascript
-                    //Accept-Language: en-US,en;q=0.5
-                    //Accept-Encoding: gzip, deflate
-                    //Content-Type: application/x-www-form-urlencoded; charset=UTF-8
-                    //X-Requested-With: XMLHttpRequest
-                    //X-CSRF-Token: JbzGgE985PHMSpi5voFHqlV3PHAUzLzQNOqVJt3HhOQ=
-                    //Referer: http://fiverr.com/join
-                    //Content-Length: 29
-                    //Cookie: _fiverr_session=BAh7ByIPc2Vzc2lvbl9pZEkiJWI1NDQyNmM0MzY4MjIyYzIwYTY4NmJlN2NlNzc5OWUxBjoGRVQiEF9jc3JmX3Rva2VuSSIxSmJ6R2dFOTg1UEhNU3BpNXZvRkhxbFYzUEhBVXpMelFOT3FWSnQzSGhPUT0GOwBG--68198f6975333b81cb957393176d0727cdadbded; __utma=156287140.1399514973.1361481945.1361481945.1361481945.1; __utmb=156287140.1.10.1361481945; __utmc=156287140; __utmz=156287140.1361481945.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none)
-                    //Connection: keep-alive
-                    //Pragma: no-cache
-                    //Cache-Control: no-cache
-
-                    //email=MyCoolEmail@hotmail.com
-
-                    //postData = email; //change the email here to a variable
-
                     //Properly encode our data for the server
                     encoding = new UTF8Encoding();
                     byteData = encoding.GetBytes(postData);
@@ -376,21 +329,6 @@ namespace FiverrBot
                     response.Close();
 
                     /* STEP 4: Register the user */
-
-                    //POST http://fiverr.com/users HTTP/1.1
-                    //Host: fiverr.com
-                    //User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64; rv:19.0) Gecko/20100101 Firefox/19.0
-                    //Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
-                    //Accept-Language: en-US,en;q=0.5
-                    //Accept-Encoding: gzip, deflate
-                    //Referer: http://fiverr.com/join
-                    //Cookie: _fiverr_session=BAh7ByIPc2Vzc2lvbl9pZEkiJWI1NDQyNmM0MzY4MjIyYzIwYTY4NmJlN2NlNzc5OWUxBjoGRVQiEF9jc3JmX3Rva2VuSSIxSmJ6R2dFOTg1UEhNU3BpNXZvRkhxbFYzUEhBVXpMelFOT3FWSnQzSGhPUT0GOwBG--68198f6975333b81cb957393176d0727cdadbded; __utma=156287140.1399514973.1361481945.1361481945.1361481945.1; __utmb=156287140.1.10.1361481945; __utmc=156287140; __utmz=156287140.1361481945.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none)
-                    //Connection: keep-alive
-                    //Content-Type: application/x-www-form-urlencoded
-                    //Content-Length: 560
-
-                    //utf8=%E2%9C%93&authenticity_token=JbzGgE985PHMSpi5voFHqlV3PHAUzLzQNOqVJt3HhOQ%3D&user%5Binvitation_token%5D=&user%5Bemail%5D=MyCoolEmail%40hotmail.com&user%5Busername%5D=SuperSweetCandy&user%5Bpassword%5D=coolpasswordbro&user%5Bcaptcha_solution%5D=11&user%5Bcaptcha_secret%5D=zleiGnFdA7nsUDMeVaTDnNlzs2qwhJMK0k4mNfUwfFc%3D%0D%0A&user%5Bspam_answers%5D=%242a%2410%24aGPCeWmh2oibmUHWdb23YOU0JfrQil1X7c9LC8KE2c6X5IeC.4yKG-%242a%2410%24aGPCeWmh2oibmUHWdb23YOgVvL0cyjaWyo3OlQ9d2LIT4Yh%2FYSf.K&user%5Bspam_answer%5D=&user%5Bterms_of_use%5D=0&user%5Bterms_of_use%5D=1
-
                     //we need to replace values with variables here
                     postData = "utf8=%E2%9C%93" +
                                "&authenticity_token=" + token +
@@ -450,15 +388,22 @@ namespace FiverrBot
                         //increase successful counter
                         createdAccounts++;
                         lblAccountsCreated.SetPropertyThreadSafe(() => lblAccountsCreated.Text, Convert.ToString(createdAccounts));
+                        txtLog.SetPropertyThreadSafe(() => txtLog.Text, "Successfully created account " + username + System.Environment.NewLine + txtLog.Text);
                     }
                 }
                 catch (WebException wex)
                 {
-                    txtLog.SetPropertyThreadSafe(() => txtLog.Text, txtLog.Text + "Error creating account " + username + " - " + wex.Message + System.Environment.NewLine);
+                    lock(unusedemails)
+                        emails.Add(email); //readd our unused email
+
+                    txtLog.SetPropertyThreadSafe(() => txtLog.Text,  "Error creating account " + username + " - " + wex.Message + System.Environment.NewLine + txtLog.Text );
                 }
                 catch (Exception ex)
                 {
-                    txtLog.SetPropertyThreadSafe(() => txtLog.Text, txtLog.Text + "Error creating account " + username + " - " + ex.Message + System.Environment.NewLine);
+                    lock (unusedemails)
+                        emails.Add(email); //readd our unused email
+
+                    txtLog.SetPropertyThreadSafe(() => txtLog.Text, "Error creating account " + username + " - " + ex.Message + System.Environment.NewLine + txtLog.Text);
                 }
             }//foreach account
             threadsRunning--;
@@ -500,12 +445,12 @@ namespace FiverrBot
                     }
 
                     //Notify log that we laoded new proxies
-                    txtLog.AppendText("New proxy set successfully loaded!" + System.Environment.NewLine);
+                    //txtLog.AppendText("New proxy set successfully loaded!" + System.Environment.NewLine);
                 }
                 catch (Exception ex)
                 {
                     //Notify log that we failed to load proxies
-                    txtLog.AppendText("Failed to load new proxy set - " + ex.Message + '\n');
+                    //txtLog.AppendText("Failed to load new proxy set - " + ex.Message + '\n');
                 }
             }
         }
@@ -515,49 +460,52 @@ namespace FiverrBot
         {
             try
             {
+                //init unusedemails
+                unusedemails = new List<string>();
+
                 //parse usernames and emails
                 usernames = new List<string>();
                 foreach (string username in txtUsernames.Lines)
-                    usernames.Add(username);
+                {   
+                    if (username != "")
+                        usernames.Add(username);
+                }
 
                 emails = new List<string>();
                 foreach (string email in txtEmails.Lines)
                     emails.Add(email);
 
+                /* No longer need to have more emails than usernames because we pull from the list at creation time and reuse emails now */
                 //verify that we have equal or more emails than usernames
-                if (emails.Count >= usernames.Count)
-                {
+                //if (emails.Count >= usernames.Count)
+                //{
                     //disable start button, enable stop button
                     btnCreateAccounts.Enabled = false;
                     btnStopCreating.Enabled = true;
 
                     //create list of accounts in hashtable format
-                    int proxynum = 0;
-                    int emailnum = 0;
                     accountsToCreate = new List<Hashtable>();
                     foreach (string username in usernames)
                     {
+                        /* Emails are now pulled from the list at creation time so we can rotate properly. */
+                        /* Proxies are split from the username and added to the hashtable that way. */
                         Hashtable newAccount = new Hashtable();
-                        newAccount["username"] = username;
-                        newAccount["email"] = emails[emailnum];
 
-                        if (proxynum > proxies.Count)
-                            proxynum = 0;   //used all proxies, reset the list
+                        //split username/proxy
+                        string[] userprox = username.Split(':');
+                        newAccount["username"] = userprox[0];
 
-                        if (proxies.Count == 0)
-                            newAccount["proxy"] = "127.0.0.1:8080"; //no proxy
+                        if (userprox[1] != null)
+                            newAccount["proxy"] = userprox[1];
                         else
-                            newAccount["proxy"] = proxies[proxynum];
+                            newAccount["proxy"] = "127.0.0.1:8080"; //no proxy
 
                         newAccount["password"] = RandomPassword.Generate();
-
-                        emailnum++;
-                        proxynum++;
                         accountsToCreate.Add(newAccount);
                     }
 
                     //delegate the accounts to the threads
-                    List<List<Hashtable>> splitAccounts = Split(accountsToCreate, numThreads);
+                    List<List<Hashtable>> splitAccounts = Split(accountsToCreate, accountsToCreate.Count / numThreads);
 
                     //if there are less account lists than threads, change the number of threads to run
                     if (splitAccounts.Count > numThreads)
@@ -579,12 +527,12 @@ namespace FiverrBot
                     //MessageBox.Show("Account creator has finished! W00t!.", "Done!", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     btnCreateAccounts.Enabled = true;
                     btnStopCreating.Enabled = false;
-                }
-                else
-                {
+                //}
+                //else
+                //{
                     //tell the user they need more emails than accounts
-                    MessageBox.Show("Not enough emails. Please supply more or equal emails to usernames.", "Need more emails than usernames!", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
+                   // MessageBox.Show("Not enough emails. Please supply more or equal emails to usernames.", "Need more emails than usernames!", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                //}
                 
             }
             catch (Exception ex)
@@ -617,6 +565,80 @@ namespace FiverrBot
                 .GroupBy(x => x.Index / threads)
                 .Select(x => x.Select(v => v.Value).ToList())
                 .ToList();
+        }
+
+        private void btnGenerateUsernames_Click(object sender, EventArgs e)
+        {
+            int proxyreuses = 0;
+            try
+            {
+                genusernames = new List<string>();
+                txtGeneratedUsernames.Clear();
+
+                //determine proxy reuses
+                if (txtProxyReuses.Text != null)
+                    proxyreuses = Convert.ToInt32(txtProxyReuses.Text);
+                else
+                    proxyreuses = 0;
+
+                for(int i = 0; i < (proxies.Count * (proxyreuses+1)); ++i)
+                {
+                    string username = fnames[random.Next(0, fnames.Count)] + lnames[random.Next(0, lnames.Count)] + random.Next(100, 99999);
+
+                    if (username.Length > 15)
+                        username = username.Substring(0, 15);
+
+                    txtGeneratedUsernames.AppendText(username + System.Environment.NewLine);
+                    genusernames.Add(username);
+                }
+                lblAccountsGenerated.Text = Convert.ToString(txtGeneratedUsernames.Lines.Count()-1);
+            }
+            catch (Exception ex)
+            {
+
+            }
+        }
+
+        private void btnTieProxies_Click(object sender, EventArgs e)
+        {
+            int proxyreuses = 0;
+
+            try
+            {
+                //determine proxy reuses
+                if (txtProxyReuses.Text != null)
+                    proxyreuses = Convert.ToInt32(txtProxyReuses.Text);
+                else
+                    proxyreuses = 0;
+
+                txtGeneratedUsernames.Clear();
+                for(int i = 0; i < genusernames.Count; i+=(proxyreuses+1))
+                {
+                    for (int p = 0; p <= proxyreuses; ++p)
+                    {
+                        string userproxy = genusernames[i + p] + ':' + proxies[i];
+                        txtGeneratedUsernames.AppendText(userproxy + System.Environment.NewLine);
+                        //genusernames.Add(userproxy);
+                    }
+                }
+                lblAccountsGenerated.Text = Convert.ToString(txtGeneratedUsernames.Lines.Count()-1);
+                genusernames.Clear();
+                foreach (string userprox in txtGeneratedUsernames.Lines)
+                    genusernames.Add(userprox);
+            }
+            catch (Exception ex)
+            {
+
+            }
+        }
+
+        private void btnExportToCreator_Click(object sender, EventArgs e)
+        {
+            //check that creator is not running before exporting
+            if (creatorThreadsRunning == 0)
+            {
+                txtUsernames.Text = txtGeneratedUsernames.Text;
+            }
         }
     }
 

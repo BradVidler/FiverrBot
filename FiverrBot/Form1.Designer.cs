@@ -99,6 +99,16 @@
             this.label12 = new System.Windows.Forms.Label();
             this.txtUsernames = new System.Windows.Forms.TextBox();
             this.label8 = new System.Windows.Forms.Label();
+            this.tabUsernameGenerator = new System.Windows.Forms.TabPage();
+            this.groupBox5 = new System.Windows.Forms.GroupBox();
+            this.label20 = new System.Windows.Forms.Label();
+            this.groupBox4 = new System.Windows.Forms.GroupBox();
+            this.btnExportToCreator = new System.Windows.Forms.Button();
+            this.txtProxyReuses = new System.Windows.Forms.TextBox();
+            this.btnTieProxies = new System.Windows.Forms.Button();
+            this.btnGenerateUsernames = new System.Windows.Forms.Button();
+            this.label18 = new System.Windows.Forms.Label();
+            this.txtGeneratedUsernames = new System.Windows.Forms.TextBox();
             this.grpLog = new System.Windows.Forms.GroupBox();
             this.txtLog = new System.Windows.Forms.TextBox();
             this.chkDisplayLogMessages = new System.Windows.Forms.CheckBox();
@@ -106,7 +116,8 @@
             this.label4 = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
-            this.tabUsernameGenerator = new System.Windows.Forms.TabPage();
+            this.lblAccountsGenerated = new System.Windows.Forms.Label();
+            this.label22 = new System.Windows.Forms.Label();
             this.tabs.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.groupBox1.SuspendLayout();
@@ -118,6 +129,9 @@
             this.tabAccountCreator.SuspendLayout();
             this.groupBox3.SuspendLayout();
             this.groupBox2.SuspendLayout();
+            this.tabUsernameGenerator.SuspendLayout();
+            this.groupBox5.SuspendLayout();
+            this.groupBox4.SuspendLayout();
             this.grpLog.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -788,6 +802,7 @@
             // 
             // comboBox2
             // 
+            this.comboBox2.Enabled = false;
             this.comboBox2.FormattingEnabled = true;
             this.comboBox2.Location = new System.Drawing.Point(384, 126);
             this.comboBox2.Name = "comboBox2";
@@ -796,6 +811,7 @@
             // 
             // textBox2
             // 
+            this.textBox2.Enabled = false;
             this.textBox2.Location = new System.Drawing.Point(487, 45);
             this.textBox2.Name = "textBox2";
             this.textBox2.Size = new System.Drawing.Size(78, 22);
@@ -812,6 +828,7 @@
             // 
             // txtCreateDelay
             // 
+            this.txtCreateDelay.Enabled = false;
             this.txtCreateDelay.Location = new System.Drawing.Point(487, 17);
             this.txtCreateDelay.Name = "txtCreateDelay";
             this.txtCreateDelay.Size = new System.Drawing.Size(78, 22);
@@ -829,6 +846,7 @@
             // chkRotateProxyUponFailure
             // 
             this.chkRotateProxyUponFailure.AutoSize = true;
+            this.chkRotateProxyUponFailure.Enabled = false;
             this.chkRotateProxyUponFailure.Location = new System.Drawing.Point(255, 90);
             this.chkRotateProxyUponFailure.Name = "chkRotateProxyUponFailure";
             this.chkRotateProxyUponFailure.Size = new System.Drawing.Size(196, 21);
@@ -839,6 +857,7 @@
             // chkRotateEmailUponFailure
             // 
             this.chkRotateEmailUponFailure.AutoSize = true;
+            this.chkRotateEmailUponFailure.Enabled = false;
             this.chkRotateEmailUponFailure.Location = new System.Drawing.Point(255, 63);
             this.chkRotateEmailUponFailure.Name = "chkRotateEmailUponFailure";
             this.chkRotateEmailUponFailure.Size = new System.Drawing.Size(195, 21);
@@ -879,9 +898,9 @@
             this.label12.AutoSize = true;
             this.label12.Location = new System.Drawing.Point(6, 125);
             this.label12.Name = "label12";
-            this.label12.Size = new System.Drawing.Size(132, 17);
+            this.label12.Size = new System.Drawing.Size(187, 17);
             this.label12.TabIndex = 2;
-            this.label12.Text = "Emails (1 Per Line):";
+            this.label12.Text = "Emails (Hotmail, 1 Per Line):";
             // 
             // txtUsernames
             // 
@@ -898,9 +917,123 @@
             this.label8.AutoSize = true;
             this.label8.Location = new System.Drawing.Point(6, 20);
             this.label8.Name = "label8";
-            this.label8.Size = new System.Drawing.Size(163, 17);
+            this.label8.Size = new System.Drawing.Size(195, 17);
             this.label8.TabIndex = 0;
-            this.label8.Text = "Usernames (1 Per Line):";
+            this.label8.Text = "Username:Proxy (1 Per Line):";
+            // 
+            // tabUsernameGenerator
+            // 
+            this.tabUsernameGenerator.BackColor = System.Drawing.SystemColors.InactiveCaptionText;
+            this.tabUsernameGenerator.Controls.Add(this.groupBox5);
+            this.tabUsernameGenerator.Controls.Add(this.groupBox4);
+            this.tabUsernameGenerator.Location = new System.Drawing.Point(4, 25);
+            this.tabUsernameGenerator.Name = "tabUsernameGenerator";
+            this.tabUsernameGenerator.Padding = new System.Windows.Forms.Padding(3);
+            this.tabUsernameGenerator.Size = new System.Drawing.Size(867, 246);
+            this.tabUsernameGenerator.TabIndex = 3;
+            this.tabUsernameGenerator.Text = "Username Gen";
+            // 
+            // groupBox5
+            // 
+            this.groupBox5.Controls.Add(this.label20);
+            this.groupBox5.ForeColor = System.Drawing.SystemColors.ControlLightLight;
+            this.groupBox5.Location = new System.Drawing.Point(570, 6);
+            this.groupBox5.Name = "groupBox5";
+            this.groupBox5.Size = new System.Drawing.Size(291, 234);
+            this.groupBox5.TabIndex = 5;
+            this.groupBox5.TabStop = false;
+            this.groupBox5.Text = "Note";
+            // 
+            // label20
+            // 
+            this.label20.Location = new System.Drawing.Point(7, 22);
+            this.label20.Name = "label20";
+            this.label20.Size = new System.Drawing.Size(278, 206);
+            this.label20.TabIndex = 0;
+            this.label20.Text = "This module will generate usernames based on how many proxies you have, and how m" +
+                "any times you want to reuse a proxy. 100 proxies with no reuse is 100 usernames," +
+                " 1 reuses is 200 accounts, etc...";
+            // 
+            // groupBox4
+            // 
+            this.groupBox4.Controls.Add(this.lblAccountsGenerated);
+            this.groupBox4.Controls.Add(this.label22);
+            this.groupBox4.Controls.Add(this.btnExportToCreator);
+            this.groupBox4.Controls.Add(this.txtProxyReuses);
+            this.groupBox4.Controls.Add(this.btnTieProxies);
+            this.groupBox4.Controls.Add(this.btnGenerateUsernames);
+            this.groupBox4.Controls.Add(this.label18);
+            this.groupBox4.Controls.Add(this.txtGeneratedUsernames);
+            this.groupBox4.ForeColor = System.Drawing.SystemColors.ControlLightLight;
+            this.groupBox4.Location = new System.Drawing.Point(6, 6);
+            this.groupBox4.Name = "groupBox4";
+            this.groupBox4.Size = new System.Drawing.Size(558, 234);
+            this.groupBox4.TabIndex = 4;
+            this.groupBox4.TabStop = false;
+            this.groupBox4.Text = "Username Generator";
+            // 
+            // btnExportToCreator
+            // 
+            this.btnExportToCreator.BackColor = System.Drawing.SystemColors.ControlDarkDark;
+            this.btnExportToCreator.ForeColor = System.Drawing.SystemColors.Control;
+            this.btnExportToCreator.Location = new System.Drawing.Point(293, 106);
+            this.btnExportToCreator.Name = "btnExportToCreator";
+            this.btnExportToCreator.Size = new System.Drawing.Size(152, 44);
+            this.btnExportToCreator.TabIndex = 29;
+            this.btnExportToCreator.Text = "Export Accounts to Creator";
+            this.btnExportToCreator.UseVisualStyleBackColor = false;
+            this.btnExportToCreator.Click += new System.EventHandler(this.btnExportToCreator_Click);
+            // 
+            // txtProxyReuses
+            // 
+            this.txtProxyReuses.Location = new System.Drawing.Point(451, 75);
+            this.txtProxyReuses.Name = "txtProxyReuses";
+            this.txtProxyReuses.Size = new System.Drawing.Size(100, 22);
+            this.txtProxyReuses.TabIndex = 28;
+            // 
+            // btnTieProxies
+            // 
+            this.btnTieProxies.BackColor = System.Drawing.SystemColors.ControlDarkDark;
+            this.btnTieProxies.ForeColor = System.Drawing.SystemColors.Control;
+            this.btnTieProxies.Location = new System.Drawing.Point(293, 72);
+            this.btnTieProxies.Name = "btnTieProxies";
+            this.btnTieProxies.Size = new System.Drawing.Size(152, 28);
+            this.btnTieProxies.TabIndex = 27;
+            this.btnTieProxies.Text = "Tie Proxies";
+            this.btnTieProxies.UseVisualStyleBackColor = false;
+            this.btnTieProxies.Click += new System.EventHandler(this.btnTieProxies_Click);
+            // 
+            // btnGenerateUsernames
+            // 
+            this.btnGenerateUsernames.BackColor = System.Drawing.SystemColors.ControlDarkDark;
+            this.btnGenerateUsernames.ForeColor = System.Drawing.SystemColors.Control;
+            this.btnGenerateUsernames.Location = new System.Drawing.Point(293, 38);
+            this.btnGenerateUsernames.Name = "btnGenerateUsernames";
+            this.btnGenerateUsernames.Size = new System.Drawing.Size(152, 28);
+            this.btnGenerateUsernames.TabIndex = 26;
+            this.btnGenerateUsernames.Text = "Generate Usernames";
+            this.btnGenerateUsernames.UseVisualStyleBackColor = false;
+            this.btnGenerateUsernames.Click += new System.EventHandler(this.btnGenerateUsernames_Click);
+            // 
+            // label18
+            // 
+            this.label18.AutoSize = true;
+            this.label18.ForeColor = System.Drawing.SystemColors.ControlLightLight;
+            this.label18.Location = new System.Drawing.Point(6, 18);
+            this.label18.Name = "label18";
+            this.label18.Size = new System.Drawing.Size(112, 17);
+            this.label18.TabIndex = 2;
+            this.label18.Text = "Username:Proxy";
+            // 
+            // txtGeneratedUsernames
+            // 
+            this.txtGeneratedUsernames.Location = new System.Drawing.Point(6, 38);
+            this.txtGeneratedUsernames.Multiline = true;
+            this.txtGeneratedUsernames.Name = "txtGeneratedUsernames";
+            this.txtGeneratedUsernames.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
+            this.txtGeneratedUsernames.Size = new System.Drawing.Size(281, 190);
+            this.txtGeneratedUsernames.TabIndex = 3;
+            this.txtGeneratedUsernames.WordWrap = false;
             // 
             // grpLog
             // 
@@ -928,6 +1061,8 @@
             // chkDisplayLogMessages
             // 
             this.chkDisplayLogMessages.AutoSize = true;
+            this.chkDisplayLogMessages.Checked = true;
+            this.chkDisplayLogMessages.CheckState = System.Windows.Forms.CheckState.Checked;
             this.chkDisplayLogMessages.ForeColor = System.Drawing.SystemColors.ControlLightLight;
             this.chkDisplayLogMessages.Location = new System.Drawing.Point(715, 476);
             this.chkDisplayLogMessages.Name = "chkDisplayLogMessages";
@@ -972,15 +1107,24 @@
             // 
             this.openFileDialog1.Filter = "Text Files|*.txt";
             // 
-            // tabUsernameGenerator
+            // lblAccountsGenerated
             // 
-            this.tabUsernameGenerator.BackColor = System.Drawing.SystemColors.InactiveCaptionText;
-            this.tabUsernameGenerator.Location = new System.Drawing.Point(4, 25);
-            this.tabUsernameGenerator.Name = "tabUsernameGenerator";
-            this.tabUsernameGenerator.Padding = new System.Windows.Forms.Padding(3);
-            this.tabUsernameGenerator.Size = new System.Drawing.Size(867, 246);
-            this.tabUsernameGenerator.TabIndex = 3;
-            this.tabUsernameGenerator.Text = "Username Gen";
+            this.lblAccountsGenerated.AutoSize = true;
+            this.lblAccountsGenerated.Location = new System.Drawing.Point(451, 201);
+            this.lblAccountsGenerated.Name = "lblAccountsGenerated";
+            this.lblAccountsGenerated.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
+            this.lblAccountsGenerated.Size = new System.Drawing.Size(16, 17);
+            this.lblAccountsGenerated.TabIndex = 31;
+            this.lblAccountsGenerated.Text = "0";
+            // 
+            // label22
+            // 
+            this.label22.AutoSize = true;
+            this.label22.Location = new System.Drawing.Point(293, 201);
+            this.label22.Name = "label22";
+            this.label22.Size = new System.Drawing.Size(142, 17);
+            this.label22.TabIndex = 30;
+            this.label22.Text = "Accounts Generated:";
             // 
             // Form1
             // 
@@ -1013,6 +1157,10 @@
             this.groupBox3.PerformLayout();
             this.groupBox2.ResumeLayout(false);
             this.groupBox2.PerformLayout();
+            this.tabUsernameGenerator.ResumeLayout(false);
+            this.groupBox5.ResumeLayout(false);
+            this.groupBox4.ResumeLayout(false);
+            this.groupBox4.PerformLayout();
             this.grpLog.ResumeLayout(false);
             this.grpLog.PerformLayout();
             this.ResumeLayout(false);
@@ -1101,6 +1249,17 @@
         private System.Windows.Forms.Button btnExportUnusedUsernames;
         private System.Windows.Forms.OpenFileDialog openFileDialog1;
         private System.Windows.Forms.TabPage tabUsernameGenerator;
+        private System.Windows.Forms.GroupBox groupBox5;
+        private System.Windows.Forms.Label label20;
+        private System.Windows.Forms.GroupBox groupBox4;
+        private System.Windows.Forms.Button btnGenerateUsernames;
+        private System.Windows.Forms.Label label18;
+        private System.Windows.Forms.TextBox txtGeneratedUsernames;
+        private System.Windows.Forms.TextBox txtProxyReuses;
+        private System.Windows.Forms.Button btnTieProxies;
+        private System.Windows.Forms.Button btnExportToCreator;
+        private System.Windows.Forms.Label lblAccountsGenerated;
+        private System.Windows.Forms.Label label22;
 
     }
 }
