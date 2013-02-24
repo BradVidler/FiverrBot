@@ -29,7 +29,7 @@
         private void InitializeComponent()
         {
             this.txtAddUsername = new System.Windows.Forms.TextBox();
-            this.tabAccounts = new System.Windows.Forms.TabControl();
+            this.tabs = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.lblAccountsLoaded = new System.Windows.Forms.Label();
@@ -79,7 +79,7 @@
             this.btnExportCreated = new System.Windows.Forms.Button();
             this.btnExportUnusedEmails = new System.Windows.Forms.Button();
             this.btnExportUnusedUsernames = new System.Windows.Forms.Button();
-            this.label18 = new System.Windows.Forms.Label();
+            this.lblCreatorThreadsRunning = new System.Windows.Forms.Label();
             this.label19 = new System.Windows.Forms.Label();
             this.lblAccountsCreated = new System.Windows.Forms.Label();
             this.label17 = new System.Windows.Forms.Label();
@@ -102,11 +102,12 @@
             this.grpLog = new System.Windows.Forms.GroupBox();
             this.txtLog = new System.Windows.Forms.TextBox();
             this.chkDisplayLogMessages = new System.Windows.Forms.CheckBox();
-            this.lblThreadsRunnings = new System.Windows.Forms.Label();
+            this.lblThreadsRunning = new System.Windows.Forms.Label();
             this.label4 = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
-            this.tabAccounts.SuspendLayout();
+            this.tabUsernameGenerator = new System.Windows.Forms.TabPage();
+            this.tabs.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.grpImExAccounts.SuspendLayout();
@@ -130,16 +131,17 @@
             this.txtAddUsername.Size = new System.Drawing.Size(143, 22);
             this.txtAddUsername.TabIndex = 6;
             // 
-            // tabAccounts
+            // tabs
             // 
-            this.tabAccounts.Controls.Add(this.tabPage1);
-            this.tabAccounts.Controls.Add(this.tabPage2);
-            this.tabAccounts.Controls.Add(this.tabAccountCreator);
-            this.tabAccounts.Location = new System.Drawing.Point(12, 43);
-            this.tabAccounts.Name = "tabAccounts";
-            this.tabAccounts.SelectedIndex = 0;
-            this.tabAccounts.Size = new System.Drawing.Size(875, 275);
-            this.tabAccounts.TabIndex = 7;
+            this.tabs.Controls.Add(this.tabPage1);
+            this.tabs.Controls.Add(this.tabPage2);
+            this.tabs.Controls.Add(this.tabAccountCreator);
+            this.tabs.Controls.Add(this.tabUsernameGenerator);
+            this.tabs.Location = new System.Drawing.Point(12, 43);
+            this.tabs.Name = "tabs";
+            this.tabs.SelectedIndex = 0;
+            this.tabs.Size = new System.Drawing.Size(875, 275);
+            this.tabs.TabIndex = 7;
             // 
             // tabPage1
             // 
@@ -624,7 +626,7 @@
             this.groupBox3.Controls.Add(this.btnExportCreated);
             this.groupBox3.Controls.Add(this.btnExportUnusedEmails);
             this.groupBox3.Controls.Add(this.btnExportUnusedUsernames);
-            this.groupBox3.Controls.Add(this.label18);
+            this.groupBox3.Controls.Add(this.lblCreatorThreadsRunning);
             this.groupBox3.Controls.Add(this.label19);
             this.groupBox3.Controls.Add(this.lblAccountsCreated);
             this.groupBox3.Controls.Add(this.label17);
@@ -697,15 +699,15 @@
             this.btnExportUnusedUsernames.Text = "Export Unused Usernames";
             this.btnExportUnusedUsernames.UseVisualStyleBackColor = false;
             // 
-            // label18
+            // lblCreatorThreadsRunning
             // 
-            this.label18.AutoSize = true;
-            this.label18.Location = new System.Drawing.Point(136, 50);
-            this.label18.Name = "label18";
-            this.label18.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
-            this.label18.Size = new System.Drawing.Size(16, 17);
-            this.label18.TabIndex = 26;
-            this.label18.Text = "0";
+            this.lblCreatorThreadsRunning.AutoSize = true;
+            this.lblCreatorThreadsRunning.Location = new System.Drawing.Point(136, 50);
+            this.lblCreatorThreadsRunning.Name = "lblCreatorThreadsRunning";
+            this.lblCreatorThreadsRunning.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
+            this.lblCreatorThreadsRunning.Size = new System.Drawing.Size(16, 17);
+            this.lblCreatorThreadsRunning.TabIndex = 26;
+            this.lblCreatorThreadsRunning.Text = "0";
             // 
             // label19
             // 
@@ -934,16 +936,16 @@
             this.chkDisplayLogMessages.Text = "Display Log Messages";
             this.chkDisplayLogMessages.UseVisualStyleBackColor = true;
             // 
-            // lblThreadsRunnings
+            // lblThreadsRunning
             // 
-            this.lblThreadsRunnings.AutoSize = true;
-            this.lblThreadsRunnings.ForeColor = System.Drawing.SystemColors.ControlLightLight;
-            this.lblThreadsRunnings.Location = new System.Drawing.Point(168, 477);
-            this.lblThreadsRunnings.Name = "lblThreadsRunnings";
-            this.lblThreadsRunnings.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
-            this.lblThreadsRunnings.Size = new System.Drawing.Size(16, 17);
-            this.lblThreadsRunnings.TabIndex = 20;
-            this.lblThreadsRunnings.Text = "0";
+            this.lblThreadsRunning.AutoSize = true;
+            this.lblThreadsRunning.ForeColor = System.Drawing.SystemColors.ControlLightLight;
+            this.lblThreadsRunning.Location = new System.Drawing.Point(168, 477);
+            this.lblThreadsRunning.Name = "lblThreadsRunning";
+            this.lblThreadsRunning.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
+            this.lblThreadsRunning.Size = new System.Drawing.Size(16, 17);
+            this.lblThreadsRunning.TabIndex = 20;
+            this.lblThreadsRunning.Text = "0";
             // 
             // label4
             // 
@@ -970,6 +972,16 @@
             // 
             this.openFileDialog1.Filter = "Text Files|*.txt";
             // 
+            // tabUsernameGenerator
+            // 
+            this.tabUsernameGenerator.BackColor = System.Drawing.SystemColors.InactiveCaptionText;
+            this.tabUsernameGenerator.Location = new System.Drawing.Point(4, 25);
+            this.tabUsernameGenerator.Name = "tabUsernameGenerator";
+            this.tabUsernameGenerator.Padding = new System.Windows.Forms.Padding(3);
+            this.tabUsernameGenerator.Size = new System.Drawing.Size(867, 246);
+            this.tabUsernameGenerator.TabIndex = 3;
+            this.tabUsernameGenerator.Text = "Username Gen";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -977,14 +989,14 @@
             this.BackColor = System.Drawing.SystemColors.InactiveCaptionText;
             this.ClientSize = new System.Drawing.Size(899, 501);
             this.Controls.Add(this.label3);
-            this.Controls.Add(this.lblThreadsRunnings);
+            this.Controls.Add(this.lblThreadsRunning);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.chkDisplayLogMessages);
             this.Controls.Add(this.grpLog);
-            this.Controls.Add(this.tabAccounts);
+            this.Controls.Add(this.tabs);
             this.Name = "Form1";
             this.Text = "Form1";
-            this.tabAccounts.ResumeLayout(false);
+            this.tabs.ResumeLayout(false);
             this.tabPage1.ResumeLayout(false);
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
@@ -1011,7 +1023,7 @@
         #endregion
 
         private System.Windows.Forms.TextBox txtAddUsername;
-        private System.Windows.Forms.TabControl tabAccounts;
+        private System.Windows.Forms.TabControl tabs;
         private System.Windows.Forms.TabPage tabPage1;
         private System.Windows.Forms.TabPage tabPage2;
         private System.Windows.Forms.GroupBox grpAddAccount;
@@ -1038,7 +1050,7 @@
         private System.Windows.Forms.GroupBox grpLog;
         private System.Windows.Forms.TextBox txtLog;
         private System.Windows.Forms.CheckBox chkDisplayLogMessages;
-        private System.Windows.Forms.Label lblThreadsRunnings;
+        private System.Windows.Forms.Label lblThreadsRunning;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Button btnStartChecking;
@@ -1075,7 +1087,7 @@
         private System.Windows.Forms.Label label14;
         private System.Windows.Forms.Label label13;
         private System.Windows.Forms.GroupBox groupBox3;
-        private System.Windows.Forms.Label label18;
+        private System.Windows.Forms.Label lblCreatorThreadsRunning;
         private System.Windows.Forms.Label label19;
         private System.Windows.Forms.Label lblAccountsCreated;
         private System.Windows.Forms.Label label17;
@@ -1088,6 +1100,7 @@
         private System.Windows.Forms.Button btnExportUnusedEmails;
         private System.Windows.Forms.Button btnExportUnusedUsernames;
         private System.Windows.Forms.OpenFileDialog openFileDialog1;
+        private System.Windows.Forms.TabPage tabUsernameGenerator;
 
     }
 }

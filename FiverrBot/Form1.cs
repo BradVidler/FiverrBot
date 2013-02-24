@@ -13,6 +13,8 @@ using HtmlAgilityPack;
 using System.Threading;
 using System.Collections;
 using System.Runtime.InteropServices;
+using System.Linq.Expressions;
+using System.Reflection;
 
 namespace FiverrBot
 {
@@ -24,7 +26,9 @@ namespace FiverrBot
         private List<Hashtable> accountsToCreate, systemAccounts;
 
         int createdAccounts = 0;
-        int numThreads = 5;
+        int numThreads = 1;
+        int threadsRunning = 0;
+        int creatorThreadsRunning = 0;
 
         //thread stuff
         private static List<Hashtable>[] inputArray;   //username, password, email
@@ -78,42 +82,14 @@ namespace FiverrBot
             return parsedfile;
         }
 
-        //the following two code blocks are used to update our created accounts label
-        private string _labelText;
-        public string labelText
-        {
-            get { return _labelText; }
-            set
-            {
-                _labelText = value;
-                //updateLabelText(_labelText); //setting label to value
-            }
-        }
-
-        delegate void updateLabelTextDelegate(string newText);
-        //private void updateLabelText(string newText)
-        //{
-         //   if (label1.InvokeRequired)
-          //  {
-          //      // this is worker thread
-          //      updateLabelTextDelegate del = new updateLabelTextDelegate(updateLabelText);
-          //      label3.Invoke(del, new object[] { newText });
-           // }
-           // else
-           // {
-           //     // this is UI thread
-           //     label3.Text = newText;
-           // }
-        //}
-
         private void button1_Click(object sender, EventArgs e)
         {
             //disable button until we're done
             //button1.Enabled = false;
 
             //init thread stuff
-            inputArray = new Hashtable[numThreads];
-            resultArray = new Hashtable[numThreads];
+            inputArray = new List<Hashtable>[numThreads];
+            resultArray = new List<Hashtable>[numThreads];
             resetEvents = new ManualResetEvent[numThreads];
 
             //grab the list of accounts to make. List is in format username:password:email:proxy. Store each in a hashtable. Toss it on the list.
@@ -128,35 +104,13 @@ namespace FiverrBot
             }
         }
 
-        public Hashtable createAccountDetails()
-        {
-            double randomNumber = random.Next(15, 9999999);
-            int randomfname = random.Next(0, fnames.Count - 1);
-            int randomlname = random.Next(0, lnames.Count - 1);
-            int randompresuf = random.Next(0, presuf.Count - 1);
-            int randomemail = random.Next(0, emaildomains.Count - 1);
-
-            Hashtable testAccount = new Hashtable();
-            string username = fnames[randomfname] + lnames[randomlname] + presuf[randompresuf] + randomNumber;
-            testAccount["password"] = RandomPassword.Generate();
-            //testAccount["emailsuffix"] = "gmail.com";
-            testAccount["emailsuffix"] = emaildomains[randomemail];
-            testAccount["fname"] = fnames[randomfname];
-            testAccount["lname"] = lnames[randomlname];
-
-            if (username.Length > 15)
-                username = username.Substring(0, 15);
-
-            testAccount["username"] = username;
-            //testAccount["emailprefix"] = "th3pr0f37xf8x+"+randomNumber;
-            testAccount["emailprefix"] = username;
-
-            return testAccount;
-        }
-
         public void createAccount(object o)
         {
             int index = (int)o; //the current thread's index
+            threadsRunning++;
+            creatorThreadsRunning++;
+            lblThreadsRunning.SetPropertyThreadSafe(() => lblThreadsRunning.Text, Convert.ToString(threadsRunning));
+            lblCreatorThreadsRunning.SetPropertyThreadSafe(() => lblCreatorThreadsRunning.Text, Convert.ToString(creatorThreadsRunning));
 
             foreach (Hashtable account in inputArray[index])
             {
@@ -164,6 +118,13 @@ namespace FiverrBot
                 string password = Convert.ToString(account["password"]);
                 string email = Convert.ToString(account["email"]);
                 string proxy = Convert.ToString(account["proxy"]);
+
+                //remove username, email and proxy from lists
+                usernames.Remove(username);
+                emails.Remove(email);
+
+                if (proxy != "127.0.0.1:8080")
+                    proxies.Remove(proxy);
 
                 //Convert proxy to a WebProxy
                 WebProxy proxyObject = new WebProxy(proxy);
@@ -188,7 +149,7 @@ namespace FiverrBot
                 //This will store the page for HTMLAgilityPack
                 HtmlAgilityPack.HtmlDocument agilityPage;
 
-                //These are used to properly encode our post data
+                //These are used to properly encode our post data for the server
                 UTF8Encoding encoding;
                 Byte[] byteData;
 
@@ -200,13 +161,6 @@ namespace FiverrBot
 
                 try
                 {
-                    Hashtable accountDetails = createAccountDetails();
-
-                    username = Convert.ToString(accountDetails["username"]);
-                    emailsuffix = Convert.ToString(accountDetails["emailsuffix"]);
-                    emailprefix = Convert.ToString(accountDetails["emailprefix"]);
-                    password = Convert.ToString(accountDetails["password"]);
-
                     //This will help us avoid some 417 errors
                     System.Net.ServicePointManager.Expect100Continue = false;
 
@@ -230,7 +184,7 @@ namespace FiverrBot
                     request.Headers.Add("Accept-Encoding: gzip, deflate");
                     request.KeepAlive = true;
                     request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate; //used to view the page in plain text
-                    //request.Proxy = proxyObject;
+                    request.Proxy = proxyObject;
 
                     //Grab the response and store the cookies
                     response = (HttpWebResponse)request.GetResponse();
@@ -313,6 +267,8 @@ namespace FiverrBot
                         }
                     }
 
+                    response.Close();
+
                     /* STEP 2: Check user */
 
                     //POST http://fiverr.com/checkuser HTTP/1.1
@@ -356,7 +312,7 @@ namespace FiverrBot
                     request.KeepAlive = true;
                     request.Headers.Add("Pragma: no-cache");
                     request.Headers.Add("Cache-Control: no-cache");
-                    //request.Proxy = proxyObject;
+                    request.Proxy = proxyObject;
 
                     postRequestStream = request.GetRequestStream();
                     postRequestStream.Write(byteData, 0, byteData.Length);
@@ -364,6 +320,7 @@ namespace FiverrBot
 
                     //Grab the response
                     response = (HttpWebResponse)request.GetResponse();
+                    response.Close();
 
                     /* STEP 3: Check suspicious email */
 
@@ -408,14 +365,15 @@ namespace FiverrBot
                     request.KeepAlive = true;
                     request.Headers.Add("Pragma: no-cache");
                     request.Headers.Add("Cache-Control: no-cache");
-                    //request.Proxy = proxyObject;
+                    request.Proxy = proxyObject;
 
                     postRequestStream = request.GetRequestStream();
                     postRequestStream.Write(byteData, 0, byteData.Length);
                     postRequestStream.Close();
 
                     //Grab the response
-                    //response = (HttpWebResponse)request.GetResponse();
+                    response = (HttpWebResponse)request.GetResponse();
+                    response.Close();
 
                     /* STEP 4: Register the user */
 
@@ -434,17 +392,17 @@ namespace FiverrBot
                     //utf8=%E2%9C%93&authenticity_token=JbzGgE985PHMSpi5voFHqlV3PHAUzLzQNOqVJt3HhOQ%3D&user%5Binvitation_token%5D=&user%5Bemail%5D=MyCoolEmail%40hotmail.com&user%5Busername%5D=SuperSweetCandy&user%5Bpassword%5D=coolpasswordbro&user%5Bcaptcha_solution%5D=11&user%5Bcaptcha_secret%5D=zleiGnFdA7nsUDMeVaTDnNlzs2qwhJMK0k4mNfUwfFc%3D%0D%0A&user%5Bspam_answers%5D=%242a%2410%24aGPCeWmh2oibmUHWdb23YOU0JfrQil1X7c9LC8KE2c6X5IeC.4yKG-%242a%2410%24aGPCeWmh2oibmUHWdb23YOgVvL0cyjaWyo3OlQ9d2LIT4Yh%2FYSf.K&user%5Bspam_answer%5D=&user%5Bterms_of_use%5D=0&user%5Bterms_of_use%5D=1
 
                     //we need to replace values with variables here
-                    //postData = "utf8=%E2%9C%93" +
-                    //           "&authenticity_token=" + token +
-                    //           "&user%5Binvitation_token%5D=&user%5Bemail%5D=" + email +
-                    //           "&user%5Busername%5D=" + username +
-                    //           "&user%5Bpassword%5D=" + password +
-                    //           "&user%5Bcaptcha_solution%5D=" + captchaAnswer +
-                    //           "&user%5Bcaptcha_secret%5D=" + captchaSecret +
-                    //           "&user%5Bspam_answers%5D=" + userSpamAnswers +
-                    //           "&user%5Bspam_answer%5D=" +
-                    //           "&user%5Bterms_of_use%5D=0" +
-                    //           "&user%5Bterms_of_use%5D=1";
+                    postData = "utf8=%E2%9C%93" +
+                               "&authenticity_token=" + token +
+                               "&user%5Binvitation_token%5D=&user%5Bemail%5D=" + email +
+                               "&user%5Busername%5D=" + username +
+                               "&user%5Bpassword%5D=" + password +
+                               "&user%5Bcaptcha_solution%5D=" + captchaAnswer +
+                               "&user%5Bcaptcha_secret%5D=" + captchaSecret +
+                               "&user%5Bspam_answers%5D=" + userSpamAnswers +
+                               "&user%5Bspam_answer%5D=" +
+                               "&user%5Bterms_of_use%5D=0" +
+                               "&user%5Bterms_of_use%5D=1";
 
                     //Properly encode our data for the server
                     encoding = new UTF8Encoding();
@@ -463,7 +421,8 @@ namespace FiverrBot
                     request.KeepAlive = true;
                     request.ContentType = "application/x-www-form-urlencoded";
                     request.ContentLength = byteData.Length;
-                    //request.Proxy = proxyObject;
+                    request.Proxy = proxyObject;
+                    request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate; //used to view the page in plain text
 
                     postRequestStream = request.GetRequestStream();
                     postRequestStream.Write(byteData, 0, byteData.Length);
@@ -482,62 +441,30 @@ namespace FiverrBot
                     agilityPage = new HtmlAgilityPack.HtmlDocument();
                     agilityPage.Load(responseReader);
 
-                    // extract hrefs
-                    List<string> hrefTags = new List<string>();
-                    foreach (HtmlNode link in agilityPage.DocumentNode.SelectNodes("//a[@href]"))
+                    //search html for "please verify your account"
+                    if (agilityPage.DocumentNode.InnerHtml.Contains("Please activate your account"))
                     {
-                        HtmlAttribute att = link.Attributes["href"];
-                        hrefTags.Add(att.Value);
+                        //SUCCESS!
+                        //store the cookies in a file (we'll do this later when we actually need it)
+
+                        //increase successful counter
+                        createdAccounts++;
+                        lblAccountsCreated.SetPropertyThreadSafe(() => lblAccountsCreated.Text, Convert.ToString(createdAccounts));
                     }
-
-                    string regURL = "";
-                    if (hrefTags[0] != null)
-                        regURL = hrefTags[0];
-
-                    /* STEP 5: Redirect user to homepage */
-
-                    //GET http://fiverr.com/?new_registration=i-qc9h5GzVlwo HTTP/1.1
-                    //Host: fiverr.com
-                    //User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64; rv:19.0) Gecko/20100101 Firefox/19.0
-                    //Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
-                    //Accept-Language: en-US,en;q=0.5
-                    //Accept-Encoding: gzip, deflate
-                    //Referer: http://fiverr.com/join
-                    //Cookie: _fiverr_session=BAh7CCIPc2Vzc2lvbl9pZEkiJWI1NDQyNmM0MzY4MjIyYzIwYTY4NmJlN2NlNzc5OWUxBjoGRVQiEF9jc3JmX3Rva2VuSSIxSmJ6R2dFOTg1UEhNU3BpNXZvRkhxbFYzUEhBVXpMelFOT3FWSnQzSGhPUT0GOwBGSSIVdXNlcl9jcmVkZW50aWFscwY7AEZJIgGANjEyMmYyOTdjNDU0ZGRkMjEyNmNmNmFlMGRjNTdkNzkzODg0ZGFhODkwM2M5OWEzMGY1Njk2YmZhNDJlYmQyMDE0MTY4NThlZDY0NjRiZTczMmM4ZjYyZGE1YjE2NThkNWI1ZjhhYzkzZTQxNzU3NWI3NDQwM2JmY2M2ODA2N2MGOwBU--ddc44251c7c4ac35c0becaac407fd05db4d02307; __utma=156287140.1399514973.1361481945.1361481945.1361481945.1; __utmb=156287140.1.10.1361481945; __utmc=156287140; __utmz=156287140.1361481945.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none); fiverr_xauth=6122f297c454ddd2126cf6ae0dc57d793884daa8903c99a30f5696bfa42ebd201416858ed6464be732c8f62da5b1658d5b5f8ac93e417575b74403bfcc68067c%3A%3A
-                    //Connection: keep-alive
-
-                    request = (HttpWebRequest)HttpWebRequest.Create(regURL);
-
-                    request.Method = "GET";
-                    request.Host = "fiverr.com";
-                    request.UserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:19.0) Gecko/20100101 Firefox/19.0";
-                    request.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
-                    request.Headers.Add("Accept-Language: en-US,en;q=0.5");
-                    request.Headers.Add("Accept-Encoding: gzip, deflate");
-                    request.Referer = "http://fiverr.com/join";
-                    request.CookieContainer = tempCookies;
-                    request.KeepAlive = true;
-                    //request.Proxy = proxyObject;
-
-                    //Grab the response and store the cookies
-                    response = (HttpWebResponse)request.GetResponse();
-                    tempCookies.Add(response.Cookies);
-
-                    //store the cookies in a file (we'll do this later when we actually need it)
-
-                    //increase successful counter
-                    createdAccounts++;
-                    //updateLabelText(Convert.ToString(createdAccounts));
                 }
                 catch (WebException wex)
                 {
-
+                    txtLog.SetPropertyThreadSafe(() => txtLog.Text, txtLog.Text + "Error creating account " + username + " - " + wex.Message + System.Environment.NewLine);
                 }
                 catch (Exception ex)
                 {
-
+                    txtLog.SetPropertyThreadSafe(() => txtLog.Text, txtLog.Text + "Error creating account " + username + " - " + ex.Message + System.Environment.NewLine);
                 }
             }//foreach account
+            threadsRunning--;
+            creatorThreadsRunning--;
+            lblThreadsRunning.SetPropertyThreadSafe(() => lblThreadsRunning.Text, Convert.ToString(threadsRunning));
+            lblCreatorThreadsRunning.SetPropertyThreadSafe(() => lblCreatorThreadsRunning.Text, Convert.ToString(creatorThreadsRunning));
             resetEvents[index].Set(); //signal the thread is done working
         }
 
@@ -573,7 +500,7 @@ namespace FiverrBot
                     }
 
                     //Notify log that we laoded new proxies
-                    txtLog.AppendText("New proxy set successfully loaded!\n");
+                    txtLog.AppendText("New proxy set successfully loaded!" + System.Environment.NewLine);
                 }
                 catch (Exception ex)
                 {
@@ -586,62 +513,102 @@ namespace FiverrBot
         //creates account list and delegates the list to the threads
         private void btnCreateAccounts_Click(object sender, EventArgs e)
         {
-            //parse usernames and emails
-            foreach (string username in txtUsernames.Lines)
-                usernames.Add(username);
-
-            foreach (string email in txtEmails.Lines)
-                emails.Add(email);
-
-            //verify that we have equal or more emails than usernames
-            if (emails.Count > usernames.Count)
+            try
             {
-                //disable start button, enable stop button
-                btnCreateAccounts.Enabled = false;
-                btnStopCreating.Enabled = true;
+                //parse usernames and emails
+                usernames = new List<string>();
+                foreach (string username in txtUsernames.Lines)
+                    usernames.Add(username);
 
-                //create list of accounts in hashtable format
-                int proxynum = 0;
-                int emailnum = 0;
-                foreach (string username in usernames)
+                emails = new List<string>();
+                foreach (string email in txtEmails.Lines)
+                    emails.Add(email);
+
+                //verify that we have equal or more emails than usernames
+                if (emails.Count >= usernames.Count)
                 {
-                    Hashtable newAccount = new Hashtable();
-                    newAccount["username"] = username;
-                    newAccount["email"] = emails[emailnum];
+                    //disable start button, enable stop button
+                    btnCreateAccounts.Enabled = false;
+                    btnStopCreating.Enabled = true;
 
-                    if(proxynum > proxies.Count) 
-                        proxynum = 0;   //used all proxies, reset the list
-                    
-                    if(proxies.Count == 0)
-                        newAccount["proxy"] = "127.0.0.1:8080"; //no proxy
-                    else
-                        newAccount["proxy"] = proxies[proxynum];
+                    //create list of accounts in hashtable format
+                    int proxynum = 0;
+                    int emailnum = 0;
+                    accountsToCreate = new List<Hashtable>();
+                    foreach (string username in usernames)
+                    {
+                        Hashtable newAccount = new Hashtable();
+                        newAccount["username"] = username;
+                        newAccount["email"] = emails[emailnum];
 
-                    newAccount["password"] = RandomPassword.Generate();
+                        if (proxynum > proxies.Count)
+                            proxynum = 0;   //used all proxies, reset the list
 
-                    emailnum++;
-                    usernames.Remove(username);
-                    emails.Remove(emails[emailnum]);
+                        if (proxies.Count == 0)
+                            newAccount["proxy"] = "127.0.0.1:8080"; //no proxy
+                        else
+                            newAccount["proxy"] = proxies[proxynum];
 
-                    accountsToCreate.Add(newAccount);
+                        newAccount["password"] = RandomPassword.Generate();
+
+                        emailnum++;
+                        proxynum++;
+                        accountsToCreate.Add(newAccount);
+                    }
+
+                    //delegate the accounts to the threads
+                    List<List<Hashtable>> splitAccounts = Split(accountsToCreate, numThreads);
+
+                    //if there are less account lists than threads, change the number of threads to run
+                    if (splitAccounts.Count > numThreads)
+                        numThreads = splitAccounts.Count;
+
+                    //init thread stuff
+                    inputArray = new List<Hashtable>[numThreads];
+                    resultArray = new List<Hashtable>[numThreads];
+                    resetEvents = new ManualResetEvent[numThreads];
+
+                    for (int i = 0; i <= numThreads-1; ++i)
+                    {
+                        inputArray[i] = splitAccounts[i];
+                        resetEvents[i] = new ManualResetEvent(false);
+                        ThreadPool.QueueUserWorkItem(new WaitCallback(createAccount), (object)i);
+                    }
+
+                    //WaitHandle.WaitAll(resetEvents);
+                    //MessageBox.Show("Account creator has finished! W00t!.", "Done!", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    btnCreateAccounts.Enabled = true;
+                    btnStopCreating.Enabled = false;
                 }
-
-                //delegate the accounts to the threads
-                List<List<Hashtable>> splitAccounts = Split(accountsToCreate, numThreads);
-                for (int i = 0; i < numThreads; ++i)
+                else
                 {
-                    inputArray[i] = splitAccounts[i];
-                    resetEvents[i] = new ManualResetEvent(false);
-                    ThreadPool.QueueUserWorkItem(new WaitCallback(createAccount), (object)i);
+                    //tell the user they need more emails than accounts
+                    MessageBox.Show("Not enough emails. Please supply more or equal emails to usernames.", "Need more emails than usernames!", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
-            }
-            else
-            {
-                //tell the user they need more emails than accounts
                 
             }
-        }
+            catch (Exception ex)
+            {
+                //txtLog.SetPropertyThreadSafe(() => txtLog.Text, txtLog.Text + "Error initializing threads. Make sure you have some usernames/emails in the list. " + ex.Message + System.Environment.NewLine);
+            }
+            
 
+            //update proxy count and save them
+            lblProxiesLoaded.SetPropertyThreadSafe(() => lblProxiesLoaded.Text, Convert.ToString(proxies.Count));
+
+            //save proxies to system
+            using (System.IO.StreamWriter proxiesfile = new System.IO.StreamWriter(@"systemproxies.txt"))
+            {
+                foreach (string line in proxies)
+                {
+                    proxiesfile.WriteLine(line);
+                }
+            }
+
+            //Notify log that we laoded new proxies
+            //txtLog.AppendText("Used proxies have been removed from the system list." + System.Environment.NewLine);
+        }
+        
         //split a list into a list of lists in order to split accounts between threads
         public static List<List<Hashtable>> Split(List<Hashtable> source, int threads)
         {
@@ -665,6 +632,33 @@ namespace FiverrBot
         public static void SetWatermark(this TextBox textBox, string watermarkText)
         {
             SendMessage(textBox.Handle, EM_SETCUEBANNER, 0, watermarkText);
+        }
+    }
+
+    public static class ExtensionHelpers
+    {
+        //the following block of code allows us to update controls from separate threads like this:
+        //myLabel.SetPropertyThreadSafe(() => myLabel.Text, status);
+        private delegate void SetPropertyThreadSafeDelegate<TResult>(Control @this, Expression<Func<TResult>> property, TResult value);
+        public static void SetPropertyThreadSafe<TResult>(this Control @this, Expression<Func<TResult>> property, TResult value)
+        {
+            var propertyInfo = (property.Body as MemberExpression).Member as PropertyInfo;
+
+            if (propertyInfo == null ||
+                !@this.GetType().IsSubclassOf(propertyInfo.ReflectedType) ||
+                @this.GetType().GetProperty(propertyInfo.Name, propertyInfo.PropertyType) == null)
+            {
+                throw new ArgumentException("The lambda expression 'property' must reference a valid property on this Control.");
+            }
+
+            if (@this.InvokeRequired)
+            {
+                @this.Invoke(new SetPropertyThreadSafeDelegate<TResult>(SetPropertyThreadSafe), new object[] { @this, property, value });
+            }
+            else
+            {
+                @this.GetType().InvokeMember(propertyInfo.Name, BindingFlags.SetProperty, null, @this, new object[] { value });
+            }
         }
     }
 }
