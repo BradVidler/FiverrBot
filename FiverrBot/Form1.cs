@@ -10,31 +10,149 @@ using System.Net;
 using System.IO;
 
 using HtmlAgilityPack;
+using System.Threading;
+using System.Collections;
+using System.Runtime.InteropServices;
 
 namespace FiverrBot
 {
     public partial class Form1 : Form
     {
+        private Random random = new Random();
+
+        //We're gonna go ahead and parse all of our data so we don't do this multiple times
+        private List<string> fnames, lnames, presuf, emaildomains, proxies;
+
+        int createdAccounts = 0;
+        int numThreads = 5;
+
+        //thread stuff
+        private static Hashtable[] inputArray;   //username, password, email
+        private static Hashtable[] resultArray;  //successful/failed, error message
+        private static ManualResetEvent[] resetEvents;
+
         public Form1()
         {
             InitializeComponent();
+
+            //Initialize textbox watermarks
+            TextBoxWatermarkExtensionMethod.SetWatermark(txtAddUsername, "Fiverr Username");
+            TextBoxWatermarkExtensionMethod.SetWatermark(txtAddPassword, "Fiverr Password");
+            TextBoxWatermarkExtensionMethod.SetWatermark(txtAddProxy, "Proxy (Optional)");
+            TextBoxWatermarkExtensionMethod.SetWatermark(txtAddPort, "Port (Optional)");
+            TextBoxWatermarkExtensionMethod.SetWatermark(txtAddProxyUsername, "Proxy Username (Optional)");
+            TextBoxWatermarkExtensionMethod.SetWatermark(txtAddProxyPassword, "Proxy Password (Optional)");
         }
+
+        public List<string> parser(string file)
+        {
+            int counter = 0;
+            List<string> parsedfile = new List<string>();
+            string line;
+            System.IO.StreamReader openfile = new System.IO.StreamReader(file);
+
+            try
+            {
+                // Read the file and display it line by line.
+                while ((line = openfile.ReadLine()) != null)
+                {
+                    //Console.WriteLine (line);
+                    parsedfile.Add(line);
+                    counter++;
+                }
+            }
+            catch (Exception ex)
+            {
+
+            }
+            openfile.Close();
+            return parsedfile;
+        }
+
+        //the following two code blocks are used to update our created accounts label
+        private string _labelText;
+        public string labelText
+        {
+            get { return _labelText; }
+            set
+            {
+                _labelText = value;
+                //updateLabelText(_labelText); //setting label to value
+            }
+        }
+
+        delegate void updateLabelTextDelegate(string newText);
+        //private void updateLabelText(string newText)
+        //{
+         //   if (label1.InvokeRequired)
+          //  {
+          //      // this is worker thread
+          //      updateLabelTextDelegate del = new updateLabelTextDelegate(updateLabelText);
+          //      label3.Invoke(del, new object[] { newText });
+           // }
+           // else
+           // {
+           //     // this is UI thread
+           //     label3.Text = newText;
+           // }
+        //}
 
         private void button1_Click(object sender, EventArgs e)
         {
-            //This is just the debug data we're going to use to test this thing...
-            string username = "TheOneBeast";
-            string password = "coolpasswordbrah";
-            string email = "gregherman219@hotmail.com";
-            string proxy = "119.252.160.34:8080";
+            //disable button until we're done
+            //button1.Enabled = false;
 
-            createAccount(username, password, email, proxy);
+            //init thread stuff
+            inputArray = new Hashtable[numThreads];
+            resultArray = new Hashtable[numThreads];
+            resetEvents = new ManualResetEvent[numThreads];
+
+            //grab the list of accounts to make. List is in format username:password:email:proxy. Store each in a hashtable. Toss it on the list.
+
+
+            //feed initial input values from list, fill resetEvents. Each thread will get a new input after every iteration of createAccount().
+            for (int s = 0; s < numThreads; s++)
+            {
+                //inputArray[s] = rand.Next(1, 5000000);
+                resetEvents[s] = new ManualResetEvent(false);
+                //ThreadPool.QueueUserWorkItem(new WaitCallback(DoWork), (object)s);
+            }
         }
 
-        public void createAccount(string username, string password, string email, string proxy)
+        public Hashtable createAccountDetails()
         {
+            double randomNumber = random.Next(15, 9999999);
+            int randomfname = random.Next(0, fnames.Count - 1);
+            int randomlname = random.Next(0, lnames.Count - 1);
+            int randompresuf = random.Next(0, presuf.Count - 1);
+            int randomemail = random.Next(0, emaildomains.Count - 1);
+
+            Hashtable testAccount = new Hashtable();
+            string username = fnames[randomfname] + lnames[randomlname] + presuf[randompresuf] + randomNumber;
+            testAccount["password"] = RandomPassword.Generate();
+            //testAccount["emailsuffix"] = "gmail.com";
+            testAccount["emailsuffix"] = emaildomains[randomemail];
+            testAccount["fname"] = fnames[randomfname];
+            testAccount["lname"] = lnames[randomlname];
+
+            if (username.Length > 15)
+                username = username.Substring(0, 15);
+
+            testAccount["username"] = username;
+            //testAccount["emailprefix"] = "th3pr0f37xf8x+"+randomNumber;
+            testAccount["emailprefix"] = username;
+
+            return testAccount;
+        }
+
+        public void createAccount(object o)
+        {
+            int index = (int)o; //the current thread's index
+
+            string username, password, emailsuffix, emailprefix, email, proxy;
+
             //Convert proxy to a WebProxy
-            WebProxy proxyObject = new WebProxy(proxy);
+           // WebProxy proxyObject = new WebProxy(proxy);
 
             //We're going to store our cookies here for now. 
             //Upon successful creation, we will store them in 
@@ -51,7 +169,7 @@ namespace FiverrBot
             StreamReader responseReader;
 
             //This will store the page in plain text
-            string thePage;
+            //string thePage;
 
             //This will store the page for HTMLAgilityPack
             HtmlAgilityPack.HtmlDocument agilityPage;
@@ -68,6 +186,13 @@ namespace FiverrBot
 
             try
             {
+                Hashtable accountDetails = createAccountDetails();
+
+                username = Convert.ToString(accountDetails["username"]);
+                emailsuffix = Convert.ToString(accountDetails["emailsuffix"]);
+                emailprefix = Convert.ToString(accountDetails["emailprefix"]);
+                password = Convert.ToString(accountDetails["password"]);
+
                 //This will help us avoid some 417 errors
                 System.Net.ServicePointManager.Expect100Continue = false;
 
@@ -91,7 +216,7 @@ namespace FiverrBot
                 request.Headers.Add("Accept-Encoding: gzip, deflate");
                 request.KeepAlive = true;
                 request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate; //used to view the page in plain text
-                request.Proxy = proxyObject;
+                //request.Proxy = proxyObject;
 
                 //Grab the response and store the cookies
                 response = (HttpWebResponse)request.GetResponse();
@@ -246,7 +371,7 @@ namespace FiverrBot
 
                 //email=MyCoolEmail@hotmail.com
 
-                postData = email; //change the email here to a variable
+                //postData = email; //change the email here to a variable
 
                 //Properly encode our data for the server
                 encoding = new UTF8Encoding();
@@ -295,17 +420,17 @@ namespace FiverrBot
                 //utf8=%E2%9C%93&authenticity_token=JbzGgE985PHMSpi5voFHqlV3PHAUzLzQNOqVJt3HhOQ%3D&user%5Binvitation_token%5D=&user%5Bemail%5D=MyCoolEmail%40hotmail.com&user%5Busername%5D=SuperSweetCandy&user%5Bpassword%5D=coolpasswordbro&user%5Bcaptcha_solution%5D=11&user%5Bcaptcha_secret%5D=zleiGnFdA7nsUDMeVaTDnNlzs2qwhJMK0k4mNfUwfFc%3D%0D%0A&user%5Bspam_answers%5D=%242a%2410%24aGPCeWmh2oibmUHWdb23YOU0JfrQil1X7c9LC8KE2c6X5IeC.4yKG-%242a%2410%24aGPCeWmh2oibmUHWdb23YOgVvL0cyjaWyo3OlQ9d2LIT4Yh%2FYSf.K&user%5Bspam_answer%5D=&user%5Bterms_of_use%5D=0&user%5Bterms_of_use%5D=1
 
                 //we need to replace values with variables here
-                postData = "utf8=%E2%9C%93" +
-                           "&authenticity_token=" + token +
-                           "&user%5Binvitation_token%5D=&user%5Bemail%5D=" + email +
-                           "&user%5Busername%5D=" + username +
-                           "&user%5Bpassword%5D=" + password +
-                           "&user%5Bcaptcha_solution%5D=" + captchaAnswer +
-                           "&user%5Bcaptcha_secret%5D=" + captchaSecret +
-                           "&user%5Bspam_answers%5D=" + userSpamAnswers +
-                           "&user%5Bspam_answer%5D=" +
-                           "&user%5Bterms_of_use%5D=0" +
-                           "&user%5Bterms_of_use%5D=1";
+                //postData = "utf8=%E2%9C%93" +
+                //           "&authenticity_token=" + token +
+                //           "&user%5Binvitation_token%5D=&user%5Bemail%5D=" + email +
+                //           "&user%5Busername%5D=" + username +
+                //           "&user%5Bpassword%5D=" + password +
+                //           "&user%5Bcaptcha_solution%5D=" + captchaAnswer +
+                //           "&user%5Bcaptcha_secret%5D=" + captchaSecret +
+                //           "&user%5Bspam_answers%5D=" + userSpamAnswers +
+                //           "&user%5Bspam_answer%5D=" +
+                //           "&user%5Bterms_of_use%5D=0" +
+                //           "&user%5Bterms_of_use%5D=1";
 
                 //Properly encode our data for the server
                 encoding = new UTF8Encoding();
@@ -324,7 +449,7 @@ namespace FiverrBot
                 request.KeepAlive = true;
                 request.ContentType = "application/x-www-form-urlencoded";
                 request.ContentLength = byteData.Length;
-                request.Proxy = proxyObject;
+                //request.Proxy = proxyObject;
 
                 postRequestStream = request.GetRequestStream();
                 postRequestStream.Write(byteData, 0, byteData.Length);
@@ -378,11 +503,17 @@ namespace FiverrBot
                 request.Referer = "http://fiverr.com/join";
                 request.CookieContainer = tempCookies;
                 request.KeepAlive = true;
-                request.Proxy = proxyObject;
+                //request.Proxy = proxyObject;
 
                 //Grab the response and store the cookies
                 response = (HttpWebResponse)request.GetResponse();
                 tempCookies.Add(response.Cookies);
+
+                //store the cookies in a file (we'll do this later when we actually need it)
+
+                //increase successful counter
+                createdAccounts++;
+                //updateLabelText(Convert.ToString(createdAccounts));
             }
             catch (WebException wex)
             {
@@ -392,6 +523,63 @@ namespace FiverrBot
             {
 
             }
+            resetEvents[index].Set(); //signal the thread is done working
+        }
+
+        private void label2_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void groupBox3_Enter(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnLoadProxies_Click(object sender, EventArgs e)
+        {
+            DialogResult result = openFileDialog1.ShowDialog(); // Show the dialog.
+            if (result == DialogResult.OK) // Test result.
+            {
+                string file = openFileDialog1.FileName;
+                try
+                {
+                    proxies = parser(file);
+                    lblProxiesLoaded.Text = Convert.ToString(proxies.Count);
+
+                    //save proxies to system
+                    using (System.IO.StreamWriter proxiesfile = new System.IO.StreamWriter(@"systemproxies.txt"))
+                    {
+                        foreach (string line in proxies)
+                        {
+                            proxiesfile.WriteLine(line);
+                        }
+                    }
+
+                    //Notify log that we laoded new proxies
+                    txtLog.AppendText("New proxy set successfully loaded!");
+                }
+                catch (IOException)
+                {
+                    //Notify log that we failed to load proxies
+                }
+            }
+        }
+    }
+
+    public static class TextBoxWatermarkExtensionMethod
+    {
+        private const uint ECM_FIRST = 0x1500;
+        private const uint EM_SETCUEBANNER = ECM_FIRST + 1;
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = false)]
+        private static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, uint wParam, [MarshalAs(UnmanagedType.LPWStr)] string lParam);
+
+        public static void SetWatermark(this TextBox textBox, string watermarkText)
+        {
+            SendMessage(textBox.Handle, EM_SETCUEBANNER, 0, watermarkText);
         }
     }
 }
+
+
