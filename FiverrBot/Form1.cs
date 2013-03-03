@@ -9,12 +9,18 @@ using System.Windows.Forms;
 using System.Net;
 using System.IO;
 
+//Some libs used
 using HtmlAgilityPack;
+using OpenPop;
+
 using System.Threading;
 using System.Collections;
 using System.Runtime.InteropServices;
 using System.Linq.Expressions;
 using System.Reflection;
+using OpenPop.Pop3;
+using OpenPop.Mime.Header;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace FiverrBot
 {
@@ -22,14 +28,15 @@ namespace FiverrBot
     {
         private Random random = new Random();
 
-        private List<string> usernames, emails, proxies, unusedemails;
-        private List<Hashtable> accountsToCreate, systemAccounts;
+        private List<string> usernames, emails, proxies, unusedemails, systemAccounts;
+        private List<Hashtable> accountsToCreate, verifiedAccountsList;
         private List<string> fnames, lnames, genusernames;
 
         int createdAccounts = 0;
         int numThreads = 3;
         int threadsRunning = 0;
         int creatorThreadsRunning = 0;
+        int verifiedAccounts = 0;
 
         //thread stuff
         private static List<Hashtable>[] inputArray;   //username, password, email
@@ -57,6 +64,19 @@ namespace FiverrBot
             TextBoxWatermarkExtensionMethod.SetWatermark(txtAddProxyPassword, "Proxy Password (Optional)");
             TextBoxWatermarkExtensionMethod.SetWatermark(txtProxyReuses, "Proxy Reuses");
             
+        }
+
+        //method to login if session is expired
+        public void loginToFiverr(Hashtable account)
+        {
+
+        }
+
+        //method to scrape niche usernames
+        public void scrapeUsernames(string niche)
+        {
+            //to scrape gig links
+            //<div class=\"gig-title approved\">\n<h2>\n<a href=\"/jen_goodman/have-my-girlfriends-and-i-flirt-and-compliment-you-on-facebook-for-5-days\">
         }
 
         //method used to convert files to lists
@@ -111,6 +131,48 @@ namespace FiverrBot
             }
         }
 
+        //Used to click verification links in hotmail
+        //Params: email         - The email to search in
+        //        password      - Email password
+        //        linkPattern   - Regex used to find the link we need to click
+        public string verifyHotmail(string email, string password, string linkPattern, string subject)
+        {
+            // The client disconnects from the server when being disposed
+            string link = "";
+            using (Pop3Client client = new Pop3Client())
+            {
+                // Connect to the server
+                client.Connect("pop3.live.com", 995, true);
+
+                // Authenticate ourselves towards the server
+                client.Authenticate(email, password);
+
+                // Get the number of messages in the inbox
+                int messageCount = client.GetMessageCount();
+
+                // We want to check the headers of the message before we download
+                // the full message
+                OpenPop.Mime.Message message = null; //stores the message with the link in it
+                for (int i = 1; i <= messageCount; ++i)
+                {
+                    MessageHeader headers = client.GetMessageHeaders(i);
+                    if (headers.Subject.ToString().Contains(subject))
+                    {
+                        message = client.GetMessage(i);
+                        break;
+                    }
+                }
+                //grab the link out of the email
+                //fiverr: @"(https?):((//)|(\\\\))+fiverr\.com/+[\w\d:#@%/;$()~_?\+-=\\\.&]*"
+                if (System.Text.RegularExpressions.Regex.IsMatch(message.FindFirstHtmlVersion().GetBodyAsText(), linkPattern, System.Text.RegularExpressions.RegexOptions.IgnoreCase))
+                {
+                    System.Text.RegularExpressions.Match match = System.Text.RegularExpressions.Regex.Match(message.FindFirstHtmlVersion().GetBodyAsText(), linkPattern, System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                    link = match.Value.ToString();
+                }
+            }
+            return link;
+        }
+
         public void createAccount(object o)
         {
             int index = (int)o; //the current thread's index
@@ -124,14 +186,19 @@ namespace FiverrBot
                 string username = Convert.ToString(account["username"]);
                 string password = Convert.ToString(account["password"]);
                 string email = "";
+                string emailPassword = "";
                 string proxy = Convert.ToString(account["proxy"]);
 
                 //lock email list and take the first one and remove it
                 lock (emails)
                 {
-                    if (emails.Count != 0)
+                    if (emails.Count > 0)
                     {
-                        email = emails.First();
+                        //split email and password
+                        string emailpass = emails.First();
+                        string[] emailandpass = emailpass.Split(':');
+                        email = emailandpass[0];
+                        emailPassword = emailandpass[1];
                         emails.Remove(email);
                     }
                     else
@@ -186,7 +253,6 @@ namespace FiverrBot
                     System.Net.ServicePointManager.Expect100Continue = false;
 
                     /* STEP 1: Go to to join page */
-
                     request = (HttpWebRequest)HttpWebRequest.Create("http://fiverr.com/join");
 
                     request.Method = "GET";
@@ -383,25 +449,58 @@ namespace FiverrBot
                     if (agilityPage.DocumentNode.InnerHtml.Contains("Please activate your account"))
                     {
                         //SUCCESS!
-                        //store the cookies in a file (we'll do this later when we actually need it)
-
+                        //save the cookies for this username as username.dat in /cookies folder
+                        WriteCookiesToDisk(Path.Combine(Environment.CurrentDirectory, "cookies", username + ".dat"), tempCookies);
+                        
                         //increase successful counter
                         createdAccounts++;
                         lblAccountsCreated.SetPropertyThreadSafe(() => lblAccountsCreated.Text, Convert.ToString(createdAccounts));
                         txtLog.SetPropertyThreadSafe(() => txtLog.Text, "Successfully created account " + username + System.Environment.NewLine + txtLog.Text);
+
+                        //pause to make sure we get the email
+                        Thread.Sleep(2000);
+
+                        //grab verification link
+                        string verifyLink = verifyHotmail(email, emailPassword, @"(https?):((//)|(\\\\))+fiverr\.com/+[\w\d:#@%/;$()~_?\+-=\\\.&]*", "Fiverr: Activate");
+
+                        //Verify the account! Complete success if all goes as planned here!
+                        request = (HttpWebRequest)HttpWebRequest.Create(verifyLink);
+
+                        request.Method = "GET";
+                        request.UserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:19.0) Gecko/20100101 Firefox/19.0";
+                        request.KeepAlive = true;
+                        request.Host = "fiverr.com";
+                        request.Headers.Add("Accept-Encoding: gzip, deflate");
+                        request.Headers.Add("Accept-Language: en-us");
+                        request.CookieContainer = tempCookies;
+                        request.Proxy = proxyObject;
+                        request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate; //used to view the page in plain text
+
+                        HttpWebResponse postresponse = (HttpWebResponse)request.GetResponse();
+                        StreamReader postreqreader = new StreamReader(postresponse.GetResponseStream());
+
+                        string thePage = postreqreader.ReadToEnd();
+                        if (thePage.Contains("Account successfully activated"))
+                        {
+                            //Hurray! We rule Fiverr!
+                            verifiedAccounts++;
+                            lblAccountsVerrified.SetPropertyThreadSafe(() => lblAccountsVerrified.Text, Convert.ToString(verifiedAccounts));
+                            txtLog.SetPropertyThreadSafe(() => txtLog.Text, "Successfully verrified account " + username + System.Environment.NewLine + txtLog.Text);
+                            verifiedAccountsList.Add(account);
+                        }
                     }
                 }
                 catch (WebException wex)
                 {
                     lock(unusedemails)
-                        emails.Add(email); //readd our unused email
+                        emails.Add(email + ':' + emailPassword); //readd our unused email
 
                     txtLog.SetPropertyThreadSafe(() => txtLog.Text,  "Error creating account " + username + " - " + wex.Message + System.Environment.NewLine + txtLog.Text );
                 }
                 catch (Exception ex)
                 {
                     lock (unusedemails)
-                        emails.Add(email); //readd our unused email
+                        emails.Add(email + ':' + emailPassword); //readd our unused email
 
                     txtLog.SetPropertyThreadSafe(() => txtLog.Text, "Error creating account " + username + " - " + ex.Message + System.Environment.NewLine + txtLog.Text);
                 }
@@ -411,16 +510,6 @@ namespace FiverrBot
             lblThreadsRunning.SetPropertyThreadSafe(() => lblThreadsRunning.Text, Convert.ToString(threadsRunning));
             lblCreatorThreadsRunning.SetPropertyThreadSafe(() => lblCreatorThreadsRunning.Text, Convert.ToString(creatorThreadsRunning));
             resetEvents[index].Set(); //signal the thread is done working
-        }
-
-        private void label2_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void groupBox3_Enter(object sender, EventArgs e)
-        {
-
         }
 
         //loads and saves proxies
@@ -640,6 +729,135 @@ namespace FiverrBot
                 txtUsernames.Text = txtGeneratedUsernames.Text;
             }
         }
+
+        private void btnExportCreated_Click(object sender, EventArgs e)
+        {
+            if ((verifiedAccountsList != null) && (verifiedAccountsList.Count >= 1))
+            {
+                using (System.IO.StreamWriter file = new System.IO.StreamWriter(@"C:\fiverrverifiedaccounts.txt"))
+                {
+                    foreach (Hashtable account in verifiedAccountsList)
+                    {
+                        file.WriteLine(Convert.ToString(account["username"]) + ':' +
+                                       Convert.ToString(account["password"]) + ':' +
+                                       Convert.ToString(account["proxy"]));
+                    }
+                }
+                System.Diagnostics.Process.Start(@"C:\fiverrverifiedaccounts.txt");
+            }
+            else
+                MessageBox.Show("There are no verified accounts to export!", "No Accounts to Export", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
+        }
+
+        private void btnExportUnusedUsernames_Click(object sender, EventArgs e)
+        {
+            //string verifyLink = verifyHotmail("MindaRidout63802@hotmail.com", "fCD10xQI3gOb", @"(https?):((//)|(\\\\))+fiverr\.com/+[\w\d:#@%/;$()~_?\+-=\\\.&]*", "Fiverr: Activate");
+        }
+
+        public static void WriteCookiesToDisk(string file, CookieContainer cookieJar)
+        {
+            using (Stream stream = File.Create(file))
+            {
+                try
+                {
+                    Console.Out.Write("Writing cookies to disk... ");
+                    BinaryFormatter formatter = new BinaryFormatter();
+                    formatter.Serialize(stream, cookieJar);
+                    Console.Out.WriteLine("Done.");
+                }
+                catch (Exception e)
+                {
+                    Console.Out.WriteLine("Problem writing cookies to disk: " + e.GetType());
+                }
+            }
+        }
+
+        public static CookieContainer ReadCookiesFromDisk(string file)
+        {
+
+            try
+            {
+                using (Stream stream = File.Open(file, FileMode.Open))
+                {
+                    Console.Out.Write("Reading cookies from disk... ");
+                    BinaryFormatter formatter = new BinaryFormatter();
+                    Console.Out.WriteLine("Done.");
+                    return (CookieContainer)formatter.Deserialize(stream);
+                }
+            }
+            catch (Exception e)
+            {
+                Console.Out.WriteLine("Problem reading cookies from disk: " + e.GetType());
+                return new CookieContainer();
+            }
+        }
+
+        private void btnLoadAccounts_Click(object sender, EventArgs e)
+        {
+            DialogResult result = openFileDialog1.ShowDialog(); // Show the dialog.
+            if (result == DialogResult.OK) // Test result.
+            {
+                string file = openFileDialog1.FileName;
+                try
+                {
+                    systemAccounts = parser(file);
+
+                    foreach(string acc in systemAccounts)
+                    {
+                        chklstAccounts.Items.Add(acc);
+                    }
+
+                    //save accs to system
+                    using (System.IO.StreamWriter accsfile = new System.IO.StreamWriter(@"systemaccounts.txt"))
+                    {
+                        foreach (string line in systemAccounts)
+                        {
+                            accsfile.WriteLine(line);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+
+                }
+            }
+        }
+
+        private void btnAddAccount_Click(object sender, EventArgs e)
+        {
+            if ((txtAddUsername.Text != "") && (txtAddPassword.Text != ""))
+            {
+                string account = txtAddUsername.Text + ':' + txtAddPassword.Text;
+                if (txtAddProxy.Text != "")
+                {
+                    account += ':' + txtAddProxy.Text;
+                    if (txtAddPort.Text != "") 
+                    {
+                        account += ':' + txtAddPort.Text;
+                        if (txtAddProxyUsername.Text != "") 
+                        {
+                            account += ':' + txtAddProxyUsername.Text;
+                            account += ':' + txtAddProxyPassword.Text;
+                        }
+                    }
+                    else
+                    {
+                        MessageBox.Show("Please add a port to be used with this proxy.", "Port required", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
+                        account = "";
+                    }
+                }
+                if (account != "")
+                {
+                    chklstAccounts.Items.Add(account);
+
+                    //save account to file
+                    using (System.IO.StreamWriter accsfile = new System.IO.StreamWriter(@"systemaccounts.txt"))
+                    {
+                        accsfile.WriteLine(account);
+                    }
+                }
+            }
+        }
     }
 
     //method to create text box watermarks
@@ -684,5 +902,3 @@ namespace FiverrBot
         }
     }
 }
-
-

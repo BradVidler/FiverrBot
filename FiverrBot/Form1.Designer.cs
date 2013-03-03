@@ -74,7 +74,8 @@
             this.label5 = new System.Windows.Forms.Label();
             this.tabAccountCreator = new System.Windows.Forms.TabPage();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
-            this.btnExportToSystem = new System.Windows.Forms.Button();
+            this.lblAccountsVerrified = new System.Windows.Forms.Label();
+            this.label21 = new System.Windows.Forms.Label();
             this.btnExportUserPass = new System.Windows.Forms.Button();
             this.btnExportCreated = new System.Windows.Forms.Button();
             this.btnExportUnusedEmails = new System.Windows.Forms.Button();
@@ -103,6 +104,8 @@
             this.groupBox5 = new System.Windows.Forms.GroupBox();
             this.label20 = new System.Windows.Forms.Label();
             this.groupBox4 = new System.Windows.Forms.GroupBox();
+            this.lblAccountsGenerated = new System.Windows.Forms.Label();
+            this.label22 = new System.Windows.Forms.Label();
             this.btnExportToCreator = new System.Windows.Forms.Button();
             this.txtProxyReuses = new System.Windows.Forms.TextBox();
             this.btnTieProxies = new System.Windows.Forms.Button();
@@ -114,10 +117,8 @@
             this.chkDisplayLogMessages = new System.Windows.Forms.CheckBox();
             this.lblThreadsRunning = new System.Windows.Forms.Label();
             this.label4 = new System.Windows.Forms.Label();
-            this.label3 = new System.Windows.Forms.Label();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
-            this.lblAccountsGenerated = new System.Windows.Forms.Label();
-            this.label22 = new System.Windows.Forms.Label();
+            this.tabPage3 = new System.Windows.Forms.TabPage();
             this.tabs.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.groupBox1.SuspendLayout();
@@ -139,7 +140,7 @@
             // 
             this.txtAddUsername.BackColor = System.Drawing.SystemColors.Control;
             this.txtAddUsername.Cursor = System.Windows.Forms.Cursors.IBeam;
-            this.txtAddUsername.ForeColor = System.Drawing.SystemColors.Window;
+            this.txtAddUsername.ForeColor = System.Drawing.SystemColors.InfoText;
             this.txtAddUsername.Location = new System.Drawing.Point(6, 21);
             this.txtAddUsername.Name = "txtAddUsername";
             this.txtAddUsername.Size = new System.Drawing.Size(143, 22);
@@ -151,6 +152,7 @@
             this.tabs.Controls.Add(this.tabPage2);
             this.tabs.Controls.Add(this.tabAccountCreator);
             this.tabs.Controls.Add(this.tabUsernameGenerator);
+            this.tabs.Controls.Add(this.tabPage3);
             this.tabs.Location = new System.Drawing.Point(12, 43);
             this.tabs.Name = "tabs";
             this.tabs.SelectedIndex = 0;
@@ -216,7 +218,6 @@
             this.label2.Size = new System.Drawing.Size(126, 17);
             this.label2.TabIndex = 16;
             this.label2.Text = "Accounts Loaded: ";
-            this.label2.Click += new System.EventHandler(this.label2_Click);
             // 
             // label1
             // 
@@ -326,6 +327,7 @@
             this.btnLoadAccounts.TabIndex = 9;
             this.btnLoadAccounts.Text = "Load Accounts";
             this.btnLoadAccounts.UseVisualStyleBackColor = false;
+            this.btnLoadAccounts.Click += new System.EventHandler(this.btnLoadAccounts_Click);
             // 
             // grpAddAccount
             // 
@@ -354,12 +356,13 @@
             this.btnAddAccount.TabIndex = 8;
             this.btnAddAccount.Text = "Add Account";
             this.btnAddAccount.UseVisualStyleBackColor = false;
+            this.btnAddAccount.Click += new System.EventHandler(this.btnAddAccount_Click);
             // 
             // txtAddProxyPassword
             // 
             this.txtAddProxyPassword.BackColor = System.Drawing.SystemColors.Control;
             this.txtAddProxyPassword.Cursor = System.Windows.Forms.Cursors.IBeam;
-            this.txtAddProxyPassword.ForeColor = System.Drawing.SystemColors.Window;
+            this.txtAddProxyPassword.ForeColor = System.Drawing.SystemColors.InfoText;
             this.txtAddProxyPassword.Location = new System.Drawing.Point(155, 77);
             this.txtAddProxyPassword.Name = "txtAddProxyPassword";
             this.txtAddProxyPassword.Size = new System.Drawing.Size(143, 22);
@@ -369,7 +372,7 @@
             // 
             this.txtAddProxyUsername.BackColor = System.Drawing.SystemColors.Control;
             this.txtAddProxyUsername.Cursor = System.Windows.Forms.Cursors.IBeam;
-            this.txtAddProxyUsername.ForeColor = System.Drawing.SystemColors.Window;
+            this.txtAddProxyUsername.ForeColor = System.Drawing.SystemColors.InfoText;
             this.txtAddProxyUsername.Location = new System.Drawing.Point(6, 77);
             this.txtAddProxyUsername.Name = "txtAddProxyUsername";
             this.txtAddProxyUsername.Size = new System.Drawing.Size(143, 22);
@@ -379,7 +382,7 @@
             // 
             this.txtAddPort.BackColor = System.Drawing.SystemColors.Control;
             this.txtAddPort.Cursor = System.Windows.Forms.Cursors.IBeam;
-            this.txtAddPort.ForeColor = System.Drawing.SystemColors.Window;
+            this.txtAddPort.ForeColor = System.Drawing.SystemColors.InfoText;
             this.txtAddPort.Location = new System.Drawing.Point(155, 49);
             this.txtAddPort.Name = "txtAddPort";
             this.txtAddPort.Size = new System.Drawing.Size(143, 22);
@@ -389,7 +392,7 @@
             // 
             this.txtAddProxy.BackColor = System.Drawing.SystemColors.Control;
             this.txtAddProxy.Cursor = System.Windows.Forms.Cursors.IBeam;
-            this.txtAddProxy.ForeColor = System.Drawing.SystemColors.Window;
+            this.txtAddProxy.ForeColor = System.Drawing.SystemColors.InfoText;
             this.txtAddProxy.Location = new System.Drawing.Point(6, 49);
             this.txtAddProxy.Name = "txtAddProxy";
             this.txtAddProxy.Size = new System.Drawing.Size(143, 22);
@@ -399,7 +402,7 @@
             // 
             this.txtAddPassword.BackColor = System.Drawing.SystemColors.Control;
             this.txtAddPassword.Cursor = System.Windows.Forms.Cursors.IBeam;
-            this.txtAddPassword.ForeColor = System.Drawing.SystemColors.Window;
+            this.txtAddPassword.ForeColor = System.Drawing.SystemColors.InfoText;
             this.txtAddPassword.Location = new System.Drawing.Point(155, 21);
             this.txtAddPassword.Name = "txtAddPassword";
             this.txtAddPassword.Size = new System.Drawing.Size(143, 22);
@@ -635,7 +638,8 @@
             // 
             // groupBox3
             // 
-            this.groupBox3.Controls.Add(this.btnExportToSystem);
+            this.groupBox3.Controls.Add(this.lblAccountsVerrified);
+            this.groupBox3.Controls.Add(this.label21);
             this.groupBox3.Controls.Add(this.btnExportUserPass);
             this.groupBox3.Controls.Add(this.btnExportCreated);
             this.groupBox3.Controls.Add(this.btnExportUnusedEmails);
@@ -651,26 +655,32 @@
             this.groupBox3.TabIndex = 25;
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = "Overview";
-            this.groupBox3.Enter += new System.EventHandler(this.groupBox3_Enter);
             // 
-            // btnExportToSystem
+            // lblAccountsVerrified
             // 
-            this.btnExportToSystem.BackColor = System.Drawing.SystemColors.ControlDarkDark;
-            this.btnExportToSystem.Enabled = false;
-            this.btnExportToSystem.ForeColor = System.Drawing.SystemColors.Control;
-            this.btnExportToSystem.Location = new System.Drawing.Point(6, 196);
-            this.btnExportToSystem.Name = "btnExportToSystem";
-            this.btnExportToSystem.Size = new System.Drawing.Size(195, 28);
-            this.btnExportToSystem.TabIndex = 31;
-            this.btnExportToSystem.Text = "Export Created To System";
-            this.btnExportToSystem.UseVisualStyleBackColor = false;
+            this.lblAccountsVerrified.AutoSize = true;
+            this.lblAccountsVerrified.Location = new System.Drawing.Point(136, 50);
+            this.lblAccountsVerrified.Name = "lblAccountsVerrified";
+            this.lblAccountsVerrified.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
+            this.lblAccountsVerrified.Size = new System.Drawing.Size(16, 17);
+            this.lblAccountsVerrified.TabIndex = 32;
+            this.lblAccountsVerrified.Text = "0";
+            // 
+            // label21
+            // 
+            this.label21.AutoSize = true;
+            this.label21.Location = new System.Drawing.Point(6, 50);
+            this.label21.Name = "label21";
+            this.label21.Size = new System.Drawing.Size(122, 17);
+            this.label21.TabIndex = 31;
+            this.label21.Text = "Accounts Verified:";
             // 
             // btnExportUserPass
             // 
             this.btnExportUserPass.BackColor = System.Drawing.SystemColors.ControlDarkDark;
             this.btnExportUserPass.Enabled = false;
             this.btnExportUserPass.ForeColor = System.Drawing.SystemColors.Control;
-            this.btnExportUserPass.Location = new System.Drawing.Point(6, 164);
+            this.btnExportUserPass.Location = new System.Drawing.Point(6, 199);
             this.btnExportUserPass.Name = "btnExportUserPass";
             this.btnExportUserPass.Size = new System.Drawing.Size(195, 28);
             this.btnExportUserPass.TabIndex = 30;
@@ -680,21 +690,21 @@
             // btnExportCreated
             // 
             this.btnExportCreated.BackColor = System.Drawing.SystemColors.ControlDarkDark;
-            this.btnExportCreated.Enabled = false;
             this.btnExportCreated.ForeColor = System.Drawing.SystemColors.Control;
-            this.btnExportCreated.Location = new System.Drawing.Point(6, 132);
+            this.btnExportCreated.Location = new System.Drawing.Point(6, 167);
             this.btnExportCreated.Name = "btnExportCreated";
             this.btnExportCreated.Size = new System.Drawing.Size(195, 28);
             this.btnExportCreated.TabIndex = 29;
             this.btnExportCreated.Text = "Export Created Accounts";
             this.btnExportCreated.UseVisualStyleBackColor = false;
+            this.btnExportCreated.Click += new System.EventHandler(this.btnExportCreated_Click);
             // 
             // btnExportUnusedEmails
             // 
             this.btnExportUnusedEmails.BackColor = System.Drawing.SystemColors.ControlDarkDark;
             this.btnExportUnusedEmails.Enabled = false;
             this.btnExportUnusedEmails.ForeColor = System.Drawing.SystemColors.Control;
-            this.btnExportUnusedEmails.Location = new System.Drawing.Point(6, 101);
+            this.btnExportUnusedEmails.Location = new System.Drawing.Point(6, 136);
             this.btnExportUnusedEmails.Name = "btnExportUnusedEmails";
             this.btnExportUnusedEmails.Size = new System.Drawing.Size(195, 28);
             this.btnExportUnusedEmails.TabIndex = 28;
@@ -704,19 +714,19 @@
             // btnExportUnusedUsernames
             // 
             this.btnExportUnusedUsernames.BackColor = System.Drawing.SystemColors.ControlDarkDark;
-            this.btnExportUnusedUsernames.Enabled = false;
             this.btnExportUnusedUsernames.ForeColor = System.Drawing.SystemColors.Control;
-            this.btnExportUnusedUsernames.Location = new System.Drawing.Point(6, 70);
+            this.btnExportUnusedUsernames.Location = new System.Drawing.Point(6, 105);
             this.btnExportUnusedUsernames.Name = "btnExportUnusedUsernames";
             this.btnExportUnusedUsernames.Size = new System.Drawing.Size(195, 28);
             this.btnExportUnusedUsernames.TabIndex = 27;
             this.btnExportUnusedUsernames.Text = "Export Unused Usernames";
             this.btnExportUnusedUsernames.UseVisualStyleBackColor = false;
+            this.btnExportUnusedUsernames.Click += new System.EventHandler(this.btnExportUnusedUsernames_Click);
             // 
             // lblCreatorThreadsRunning
             // 
             this.lblCreatorThreadsRunning.AutoSize = true;
-            this.lblCreatorThreadsRunning.Location = new System.Drawing.Point(136, 50);
+            this.lblCreatorThreadsRunning.Location = new System.Drawing.Point(136, 85);
             this.lblCreatorThreadsRunning.Name = "lblCreatorThreadsRunning";
             this.lblCreatorThreadsRunning.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
             this.lblCreatorThreadsRunning.Size = new System.Drawing.Size(16, 17);
@@ -726,7 +736,7 @@
             // label19
             // 
             this.label19.AutoSize = true;
-            this.label19.Location = new System.Drawing.Point(6, 50);
+            this.label19.Location = new System.Drawing.Point(6, 85);
             this.label19.Name = "label19";
             this.label19.Size = new System.Drawing.Size(122, 17);
             this.label19.TabIndex = 25;
@@ -804,7 +814,7 @@
             // 
             this.comboBox2.Enabled = false;
             this.comboBox2.FormattingEnabled = true;
-            this.comboBox2.Location = new System.Drawing.Point(384, 126);
+            this.comboBox2.Location = new System.Drawing.Point(386, 168);
             this.comboBox2.Name = "comboBox2";
             this.comboBox2.Size = new System.Drawing.Size(60, 24);
             this.comboBox2.TabIndex = 24;
@@ -837,7 +847,7 @@
             // label15
             // 
             this.label15.AutoSize = true;
-            this.label15.Location = new System.Drawing.Point(252, 125);
+            this.label15.Location = new System.Drawing.Point(254, 167);
             this.label15.Name = "label15";
             this.label15.Size = new System.Drawing.Size(116, 17);
             this.label15.TabIndex = 8;
@@ -898,9 +908,9 @@
             this.label12.AutoSize = true;
             this.label12.Location = new System.Drawing.Point(6, 125);
             this.label12.Name = "label12";
-            this.label12.Size = new System.Drawing.Size(187, 17);
+            this.label12.Size = new System.Drawing.Size(245, 17);
             this.label12.TabIndex = 2;
-            this.label12.Text = "Emails (Hotmail, 1 Per Line):";
+            this.label12.Text = "Email:Password (Hotmail, 1 Per Line):";
             // 
             // txtUsernames
             // 
@@ -971,6 +981,25 @@
             this.groupBox4.TabIndex = 4;
             this.groupBox4.TabStop = false;
             this.groupBox4.Text = "Username Generator";
+            // 
+            // lblAccountsGenerated
+            // 
+            this.lblAccountsGenerated.AutoSize = true;
+            this.lblAccountsGenerated.Location = new System.Drawing.Point(451, 201);
+            this.lblAccountsGenerated.Name = "lblAccountsGenerated";
+            this.lblAccountsGenerated.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
+            this.lblAccountsGenerated.Size = new System.Drawing.Size(16, 17);
+            this.lblAccountsGenerated.TabIndex = 31;
+            this.lblAccountsGenerated.Text = "0";
+            // 
+            // label22
+            // 
+            this.label22.AutoSize = true;
+            this.label22.Location = new System.Drawing.Point(293, 201);
+            this.label22.Name = "label22";
+            this.label22.Size = new System.Drawing.Size(142, 17);
+            this.label22.TabIndex = 30;
+            this.label22.Text = "Accounts Generated:";
             // 
             // btnExportToCreator
             // 
@@ -1092,39 +1121,19 @@
             this.label4.TabIndex = 19;
             this.label4.Text = "Threads Running";
             // 
-            // label3
-            // 
-            this.label3.AutoSize = true;
-            this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 30F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label3.ForeColor = System.Drawing.SystemColors.ControlLightLight;
-            this.label3.Location = new System.Drawing.Point(424, 7);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(463, 58);
-            this.label3.TabIndex = 21;
-            this.label3.Text = "Fiverr Bot by xxf8xx";
-            // 
             // openFileDialog1
             // 
             this.openFileDialog1.Filter = "Text Files|*.txt";
             // 
-            // lblAccountsGenerated
+            // tabPage3
             // 
-            this.lblAccountsGenerated.AutoSize = true;
-            this.lblAccountsGenerated.Location = new System.Drawing.Point(451, 201);
-            this.lblAccountsGenerated.Name = "lblAccountsGenerated";
-            this.lblAccountsGenerated.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
-            this.lblAccountsGenerated.Size = new System.Drawing.Size(16, 17);
-            this.lblAccountsGenerated.TabIndex = 31;
-            this.lblAccountsGenerated.Text = "0";
-            // 
-            // label22
-            // 
-            this.label22.AutoSize = true;
-            this.label22.Location = new System.Drawing.Point(293, 201);
-            this.label22.Name = "label22";
-            this.label22.Size = new System.Drawing.Size(142, 17);
-            this.label22.TabIndex = 30;
-            this.label22.Text = "Accounts Generated:";
+            this.tabPage3.BackColor = System.Drawing.SystemColors.InactiveCaptionText;
+            this.tabPage3.Location = new System.Drawing.Point(4, 25);
+            this.tabPage3.Name = "tabPage3";
+            this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage3.Size = new System.Drawing.Size(867, 246);
+            this.tabPage3.TabIndex = 4;
+            this.tabPage3.Text = "Username Scraper";
             // 
             // Form1
             // 
@@ -1132,7 +1141,6 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.InactiveCaptionText;
             this.ClientSize = new System.Drawing.Size(899, 501);
-            this.Controls.Add(this.label3);
             this.Controls.Add(this.lblThreadsRunning);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.chkDisplayLogMessages);
@@ -1200,7 +1208,6 @@
         private System.Windows.Forms.CheckBox chkDisplayLogMessages;
         private System.Windows.Forms.Label lblThreadsRunning;
         private System.Windows.Forms.Label label4;
-        private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Button btnStartChecking;
         private System.Windows.Forms.GroupBox grpAccountChecker;
         private System.Windows.Forms.Button btnStopChecking;
@@ -1242,7 +1249,6 @@
         private System.Windows.Forms.Button btnStopCreating;
         private System.Windows.Forms.Button btnCreateAccounts;
         private System.Windows.Forms.ComboBox comboBox2;
-        private System.Windows.Forms.Button btnExportToSystem;
         private System.Windows.Forms.Button btnExportUserPass;
         private System.Windows.Forms.Button btnExportCreated;
         private System.Windows.Forms.Button btnExportUnusedEmails;
@@ -1260,6 +1266,9 @@
         private System.Windows.Forms.Button btnExportToCreator;
         private System.Windows.Forms.Label lblAccountsGenerated;
         private System.Windows.Forms.Label label22;
+        private System.Windows.Forms.Label lblAccountsVerrified;
+        private System.Windows.Forms.Label label21;
+        private System.Windows.Forms.TabPage tabPage3;
 
     }
 }
